@@ -1,17 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { customerService } from "@/services/customerService";
+import type { Customer } from "@/types/customer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-type Customer = {
-  id: string;
-  full_name: string;
-  phone: string;
-  email: string | null;
-  address: string | null;
-};
+ 
 
 type CustomerTableProps = {
   refreshKey: number;
@@ -27,10 +22,7 @@ export default function CustomerTable({
   }, [refreshKey]);
 
   async function fetchCustomers() {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data, error } = await customerService.getCustomers();
 
     if (error) {
       console.error(error);
@@ -43,14 +35,14 @@ export default function CustomerTable({
   async function deleteCustomer(id: string) {
     if (!confirm("Delete this customer?")) return;
 
-    const { error } = await supabase
-      .from("customers")
-      .delete()
-      .eq("id", id);
+    const { error } = await customerService.deleteCustomer(id);
 
-    if (!error) {
-      fetchCustomers();
+    if (error) {
+      alert(error.message);
+      return;
     }
+
+    fetchCustomers();
   }
 
   return (

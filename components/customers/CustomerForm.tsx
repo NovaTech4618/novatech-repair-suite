@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { customerService } from "@/services/customerService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type CustomerFormProps = {
   onCustomerAdded: () => void;
@@ -18,32 +23,51 @@ export default function CustomerForm({
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
 
-    const { error } = await supabase.from("customers").insert([
-      {
-        full_name: fullName,
-        phone,
-        email,
-        address,
-      },
-    ]);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    alert("Customer added successfully!");
-
-    setFullName("");
-    setPhone("");
-    setEmail("");
-    setAddress("");
-
-    onCustomerAdded();
+  // Validate Full Name
+  if (!fullName.trim()) {
+    alert("Full Name is required.");
+    return;
   }
+
+  // Validate Phone
+  if (!phone.trim()) {
+    alert("Phone Number is required.");
+    return;
+  }
+
+  // Validate Email (optional)
+  if (
+    email.trim() &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  const { error } = await customerService.addCustomer({
+    full_name: fullName,
+    phone,
+    email,
+    address,
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Customer added successfully!");
+
+  setFullName("");
+  setPhone("");
+  setEmail("");
+  setAddress("");
+
+  onCustomerAdded();
+}
 
   return (
     <Card className="max-w-xl">
@@ -53,7 +77,6 @@ export default function CustomerForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-
           <Input
             placeholder="Full Name"
             value={fullName}
@@ -81,7 +104,6 @@ export default function CustomerForm({
           <Button type="submit" className="w-full">
             Save Customer
           </Button>
-
         </form>
       </CardContent>
     </Card>
