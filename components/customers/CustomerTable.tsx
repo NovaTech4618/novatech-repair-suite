@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -101,7 +102,12 @@ export default function CustomerTable({
                   className="border-b hover:bg-gray-50"
                 >
                   <td className="py-3">
-                    {customer.full_name}
+                    <Link
+                      href={`/customers/${customer.id}`}
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      {customer.full_name}
+                    </Link>
                   </td>
 
                   <td>{customer.phone}</td>

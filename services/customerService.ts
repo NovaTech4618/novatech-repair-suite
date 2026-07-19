@@ -8,6 +8,14 @@ export const customerService = {
       .order("created_at", { ascending: false });
   },
 
+  async getCustomerById(id: string) {
+    return await supabase
+      .from("customers")
+      .select("*")
+      .eq("id", id)
+      .single();
+  },
+
   async addCustomer(customer: {
     full_name: string;
     phone: string;
