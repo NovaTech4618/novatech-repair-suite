@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Novatech Repair Suite",
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body>
         <TooltipProvider>
           {children}
+          <Toaster richColors position="top-right" />
         </TooltipProvider>
       </body>
     </html>
