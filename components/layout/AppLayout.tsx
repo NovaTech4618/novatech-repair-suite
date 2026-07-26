@@ -1,5 +1,5 @@
-import AppSidebar from "./AppSideBar"
-import Topbar from "./Topbar";
+import AppSidebar from "./AppSidebar";
+import Header from "./Header";
 
 export default function AppLayout({
   children,
@@ -7,13 +7,13 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex">
+    <div className="flex h-screen overflow-hidden bg-slate-100">
       <AppSidebar />
 
-      <div className="flex-1">
-        <Topbar />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header />
 
-        <main className="p-6 bg-slate-100 min-h-screen">
+        <main className="flex-1 overflow-y-auto p-8">
           {children}
         </main>
       </div>

@@ -1,3 +1,6 @@
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import LowStock from "@/components/dashboard/LowStock";
+import QuickActions from "@/components/dashboard/QuickActions";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function DashboardPage() {
