@@ -10,6 +10,14 @@ import type { Customer } from "@/types/customer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 
 type CustomerTableProps = {
   refreshKey: number;
@@ -49,24 +57,19 @@ export default function CustomerTable({
     }
 
     toast.success("Customer deleted successfully!");
-
     fetchCustomers();
   }
 
   const filteredCustomers = customers.filter(
     (customer) =>
-      customer.full_name
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+      customer.full_name.toLowerCase().includes(search.toLowerCase()) ||
       customer.phone.includes(search)
   );
 
   return (
     <Card>
       <CardContent className="p-6">
-        <h2 className="text-xl font-bold mb-4">
-          Customer List
-        </h2>
+        <h2 className="text-xl font-bold mb-4">Customer List</h2>
 
         <Input
           placeholder="🔍 Search by name or phone..."
@@ -75,70 +78,59 @@ export default function CustomerTable({
           className="mb-6"
         />
 
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-3">Name</th>
-              <th className="text-left py-3">Phone</th>
-              <th className="text-left py-3">Email</th>
-              <th className="text-left py-3">Actions</th>
-            </tr>
-          </thead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-          <tbody>
+          <TableBody>
             {filteredCustomers.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="py-6 text-center text-gray-500"
-                >
+              <TableRow>
+                <TableCell colSpan={4} className="py-6 text-center text-gray-500">
                   No customers found.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredCustomers.map((customer) => (
-                <tr
-                  key={customer.id}
-                  className="border-b hover:bg-gray-50"
-                >
-                  <td className="py-3">
+                <TableRow key={customer.id}>
+                  <TableCell>
                     <Link
                       href={`/customers/${customer.id}`}
                       className="text-blue-600 hover:underline font-medium"
                     >
                       {customer.full_name}
                     </Link>
-                  </td>
+                  </TableCell>
 
-                  <td>{customer.phone}</td>
+                  <TableCell>{customer.phone}</TableCell>
 
-                  <td>{customer.email || "-"}</td>
+                  <TableCell>{customer.email || "-"}</TableCell>
 
-                  <td>
+                  <TableCell>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => onEdit(customer)}
-                      >
+                      <Button size="sm" onClick={() => onEdit(customer)}>
                         Edit
                       </Button>
 
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() =>
-                          deleteCustomer(customer.id)
-                        }
+                        onClick={() => deleteCustomer(customer.id)}
                       >
                         Delete
                       </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

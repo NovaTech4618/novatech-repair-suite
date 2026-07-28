@@ -8,6 +8,14 @@ import type { Device } from "@/types/device";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 
 type DeviceTableProps = {
   customerId: string;
@@ -25,8 +33,7 @@ export default function DeviceTable({
   }, [customerId, refreshKey]);
 
   async function fetchDevices() {
-    const { data, error } =
-      await deviceService.getDevices(customerId);
+    const { data, error } = await deviceService.getDevices(customerId);
 
     if (error) {
       toast.error("Failed to load devices.");
@@ -39,8 +46,7 @@ export default function DeviceTable({
   async function handleDelete(id: string) {
     if (!confirm("Delete this device?")) return;
 
-    const { error } =
-      await deviceService.deleteDevice(id);
+    const { error } = await deviceService.deleteDevice(id);
 
     if (error) {
       toast.error(error.message);
@@ -48,61 +54,46 @@ export default function DeviceTable({
     }
 
     toast.success("Device deleted successfully!");
-
     fetchDevices();
   }
 
   return (
     <Card>
       <CardContent className="p-6">
-        <h3 className="text-xl font-bold mb-4">
-          Device List
-        </h3>
+        <h3 className="text-xl font-bold mb-4">Device List</h3>
 
         {devices.length === 0 ? (
-          <p className="text-gray-500">
-            No devices added yet.
-          </p>
+          <p className="text-gray-500">No devices added yet.</p>
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-3">Brand</th>
-                <th className="text-left py-3">Model</th>
-                <th className="text-left py-3">Problem</th>
-                <th className="text-left py-3">Action</th>
-              </tr>
-            </thead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Brand</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead>Problem</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
 
-            <tbody>
+            <TableBody>
               {devices.map((device) => (
-                <tr
-                  key={device.id}
-                  className="border-b"
-                >
-                  <td className="py-3">
-                    {device.brand}
-                  </td>
-
-                  <td>{device.model}</td>
-
-                  <td>{device.problem}</td>
-
-                  <td>
+                <TableRow key={device.id}>
+                  <TableCell>{device.brand}</TableCell>
+                  <TableCell>{device.model}</TableCell>
+                  <TableCell>{device.problem}</TableCell>
+                  <TableCell>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() =>
-                        handleDelete(device.id)
-                      }
+                      onClick={() => handleDelete(device.id)}
                     >
                       Delete
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>

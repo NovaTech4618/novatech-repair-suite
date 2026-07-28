@@ -3,57 +3,42 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 
 import { customerService } from "@/services/customerService";
+import AppLayout from "@/components/layout/AppLayout";
 import CustomerDevices from "@/components/devices/CustomerDevices";
 
 type Props = {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 };
 
-export default async function CustomerDetailsPage({
-  params,
-}: Props) {
+export default async function CustomerDetailsPage({ params }: Props) {
   const { id } = await params;
 
-  const { data, error } =
-    await customerService.getCustomerById(id);
+  const { data, error } = await customerService.getCustomerById(id);
 
   if (error || !data) {
     notFound();
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold mb-6">
-          {data.full_name}
-        </h1>
+    <AppLayout>
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-6">{data.full_name}</h1>
 
-        <div className="space-y-3">
-          <p>
-            <strong>Phone:</strong> {data.phone}
-          </p>
+          <div className="space-y-3">
+            <p><strong>Phone:</strong> {data.phone}</p>
+            <p><strong>Email:</strong> {data.email || "-"}</p>
+            <p><strong>Address:</strong> {data.address || "-"}</p>
+          </div>
+        </div>
 
-          <p>
-            <strong>Email:</strong> {data.email || "-"}
-          </p>
+        <hr />
 
-          <p>
-            <strong>Address:</strong> {data.address || "-"}
-          </p>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold">Devices</h2>
+          <CustomerDevices customerId={data.id} />
         </div>
       </div>
-
-      <hr />
-
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold">
-          Devices
-        </h2>
-
-        <CustomerDevices customerId={data.id} />
-      </div>
-    </div>
+    </AppLayout>
   );
 }

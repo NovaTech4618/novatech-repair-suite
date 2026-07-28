@@ -1,18 +1,24 @@
+import AppLayout from "@/components/layout/AppLayout";
+import QuickStats from "@/components/dashboard/QuickStats";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import LowStock from "@/components/dashboard/LowStock";
 import QuickActions from "@/components/dashboard/QuickActions";
-import AppLayout from "@/components/layout/AppLayout";
 
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <h1 className="text-3xl font-bold">
-        Dashboard
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
-      <p className="text-slate-600 mt-2">
-        Welcome to Novatech Repair Suite
-      </p>
+      <QuickStats />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <RecentActivity />
+        <LowStock />
+      </div>
+
+      <div className="mt-6">
+        <QuickActions />
+      </div>
     </AppLayout>
   );
 }

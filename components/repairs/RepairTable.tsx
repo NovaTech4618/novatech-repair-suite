@@ -8,6 +8,14 @@ import type { Repair } from "@/types/repair";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 
 type RepairTableProps = {
   deviceId: string;
@@ -25,8 +33,7 @@ export default function RepairTable({
   }, [deviceId, refreshKey]);
 
   async function fetchRepairs() {
-    const { data, error } =
-      await repairService.getRepairs(deviceId);
+    const { data, error } = await repairService.getRepairs(deviceId);
 
     if (error) {
       toast.error("Failed to load repairs.");
@@ -39,8 +46,7 @@ export default function RepairTable({
   async function handleDelete(id: string) {
     if (!confirm("Delete this repair?")) return;
 
-    const { error } =
-      await repairService.deleteRepair(id);
+    const { error } = await repairService.deleteRepair(id);
 
     if (error) {
       toast.error(error.message);
@@ -48,63 +54,46 @@ export default function RepairTable({
     }
 
     toast.success("Repair deleted successfully!");
-
     fetchRepairs();
   }
 
   return (
     <Card>
       <CardContent className="p-6">
-        <h3 className="text-xl font-bold mb-4">
-          Repair History
-        </h3>
+        <h3 className="text-xl font-bold mb-4">Repair History</h3>
 
         {repairs.length === 0 ? (
-          <p className="text-gray-500">
-            No repairs yet.
-          </p>
+          <p className="text-gray-500">No repairs yet.</p>
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-3">Issue</th>
-                <th className="text-left py-3">Status</th>
-                <th className="text-left py-3">Technician</th>
-                <th className="text-left py-3">Action</th>
-              </tr>
-            </thead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Issue</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Technician</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
 
-            <tbody>
+            <TableBody>
               {repairs.map((repair) => (
-                <tr
-                  key={repair.id}
-                  className="border-b"
-                >
-                  <td className="py-3">
-                    {repair.issue}
-                  </td>
-
-                  <td>{repair.status}</td>
-
-                  <td>
-                    {repair.technician || "-"}
-                  </td>
-
-                  <td>
+                <TableRow key={repair.id}>
+                  <TableCell>{repair.issue}</TableCell>
+                  <TableCell>{repair.status}</TableCell>
+                  <TableCell>{repair.technician || "-"}</TableCell>
+                  <TableCell>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() =>
-                        handleDelete(repair.id)
-                      }
+                      onClick={() => handleDelete(repair.id)}
                     >
                       Delete
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>

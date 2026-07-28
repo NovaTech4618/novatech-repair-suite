@@ -1,8 +1,10 @@
+import AppLayout from "@/components/layout/AppLayout";
+
 export default function TechnicalServicesPage() {
   return (
-    <div className="p-6">
+    <AppLayout>
       <h1 className="text-3xl font-bold">Technical Services</h1>
       <p>Technical services page.</p>
-    </div>
+    </AppLayout>
   );
 }

@@ -1,7 +1,9 @@
-export default function DevicesPage() {
+import AppLayout from "@/components/layout/AppLayout";
+
+export default function SalesPage() {
   return (
-    <div className="p-6">
+    <AppLayout>
       <h1 className="text-3xl font-bold">Sales</h1>
-    </div>
+    </AppLayout>
   );
 }
