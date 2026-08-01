@@ -58,4 +58,11 @@ export const deviceService = {
       .delete()
       .eq("id", id);
   },
+
+  async getAllDevices() {
+  return await supabase
+    .from("devices")
+    .select("*, customers(full_name)")
+    .order("created_at", { ascending: false });
+},
 };

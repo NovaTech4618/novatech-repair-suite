@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -78,8 +79,15 @@ export default function DeviceTable({
             <TableBody>
               {devices.map((device) => (
                 <TableRow key={device.id}>
-                  <TableCell>{device.brand}</TableCell>
-                  <TableCell>{device.model}</TableCell>
+                  <TableCell>
+  <Link
+    href={`/devices/${device.id}`}
+    className="text-blue-600 hover:underline font-medium"
+  >
+    {device.brand}
+  </Link>
+</TableCell>
+<TableCell>{device.model}</TableCell>
                   <TableCell>{device.problem}</TableCell>
                   <TableCell>
                     <Button

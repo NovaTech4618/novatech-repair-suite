@@ -27,6 +27,7 @@ export default function RepairTable({
   refreshKey,
 }: RepairTableProps) {
   const [repairs, setRepairs] = useState<Repair[]>([]);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRepairs();
@@ -40,7 +41,7 @@ export default function RepairTable({
       return;
     }
 
-    setRepairs(data || []);
+    setRepairs((data as Repair[]) || []);
   }
 
   async function handleDelete(id: string) {
@@ -54,6 +55,24 @@ export default function RepairTable({
     }
 
     toast.success("Repair deleted successfully!");
+    fetchRepairs();
+  }
+
+  async function handleComplete(id: string) {
+    if (!confirm("Mark this repair as completed and issue a pickup ticket?")) {
+      return;
+    }
+
+    setCompletingId(id);
+    const { data, error } = await repairService.completeRepair(id);
+    setCompletingId(null);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success(`Repair completed! Ticket ${data?.ticket_number} issued.`);
     fetchRepairs();
   }
 
@@ -71,27 +90,50 @@ export default function RepairTable({
                 <TableHead>Issue</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Technician</TableHead>
+                <TableHead>Ticket #</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {repairs.map((repair) => (
-                <TableRow key={repair.id}>
-                  <TableCell>{repair.issue}</TableCell>
-                  <TableCell>{repair.status}</TableCell>
-                  <TableCell>{repair.technician || "-"}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(repair.id)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {repairs.map((repair) => {
+                const ticket = repair.repair_tickets?.[0];
+                const isDone =
+                  repair.status === "Completed" ||
+                  repair.status === "Collected";
+
+                return (
+                  <TableRow key={repair.id}>
+                    <TableCell>{repair.issue}</TableCell>
+                    <TableCell>{repair.status}</TableCell>
+                    <TableCell>{repair.technician || "-"}</TableCell>
+                    <TableCell>{ticket?.ticket_number || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {!isDone && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleComplete(repair.id)}
+                            disabled={completingId === repair.id}
+                          >
+                            {completingId === repair.id
+                              ? "Completing..."
+                              : "Mark Completed"}
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(repair.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}

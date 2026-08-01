@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { repairService } from "@/services/repairService";
+import { MANUAL_REPAIR_STATUSES, REPAIR_PRIORITIES } from "@/types/repair";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,11 @@ type RepairFormProps = {
   onRepairAdded: () => void;
 };
 
+// No shadcn <Select> component exists in this project yet, so this styling
+// matches the Input component's classes to stay visually consistent.
+const selectClassName =
+  "h-8 w-full min-w-0 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-sm outline-none transition-[color,box-shadow] duration-200 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
+
 export default function RepairForm({
   deviceId,
   onRepairAdded,
@@ -21,10 +27,14 @@ export default function RepairForm({
   const [technician, setTechnician] = useState("");
   const [issue, setIssue] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
+  const [solution, setSolution] = useState("");
   const [repairNotes, setRepairNotes] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
   const [finalCost, setFinalCost] = useState("");
-  const [status, setStatus] = useState("Received");
+  const [deposit, setDeposit] = useState("");
+  const [expectedCompletionDate, setExpectedCompletionDate] = useState("");
+  const [priority, setPriority] = useState<string>("Normal");
+  const [status, setStatus] = useState<string>("Received");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -39,16 +49,16 @@ export default function RepairForm({
 
     const { error } = await repairService.addRepair({
       device_id: deviceId,
-      technician,
+      technician: technician.trim() || null,
       issue,
-      diagnosis,
-      repair_notes: repairNotes,
-      estimated_cost: estimatedCost
-        ? Number(estimatedCost)
-        : null,
-      final_cost: finalCost
-        ? Number(finalCost)
-        : null,
+      diagnosis: diagnosis.trim() || null,
+      repair_notes: repairNotes.trim() || null,
+      solution: solution.trim() || null,
+      priority,
+      deposit: deposit ? Number(deposit) : 0,
+      expected_completion_date: expectedCompletionDate || null,
+      estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+      final_cost: finalCost ? Number(finalCost) : null,
       status,
     });
 
@@ -64,9 +74,13 @@ export default function RepairForm({
     setTechnician("");
     setIssue("");
     setDiagnosis("");
+    setSolution("");
     setRepairNotes("");
     setEstimatedCost("");
     setFinalCost("");
+    setDeposit("");
+    setExpectedCompletionDate("");
+    setPriority("Normal");
     setStatus("Received");
 
     onRepairAdded();
@@ -79,73 +93,105 @@ export default function RepairForm({
       </CardHeader>
 
       <CardContent>
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             placeholder="Technician"
             value={technician}
-            onChange={(e) =>
-              setTechnician(e.target.value)
-            }
+            onChange={(e) => setTechnician(e.target.value)}
           />
 
           <Input
             placeholder="Customer Complaint"
             value={issue}
-            onChange={(e) =>
-              setIssue(e.target.value)
-            }
+            onChange={(e) => setIssue(e.target.value)}
           />
 
           <Input
             placeholder="Diagnosis"
             value={diagnosis}
-            onChange={(e) =>
-              setDiagnosis(e.target.value)
-            }
+            onChange={(e) => setDiagnosis(e.target.value)}
+          />
+
+          <Input
+            placeholder="Solution (what was done to fix it)"
+            value={solution}
+            onChange={(e) => setSolution(e.target.value)}
           />
 
           <Input
             placeholder="Repair Notes"
             value={repairNotes}
-            onChange={(e) =>
-              setRepairNotes(e.target.value)
-            }
+            onChange={(e) => setRepairNotes(e.target.value)}
           />
 
-          <Input
-            type="number"
-            placeholder="Estimated Cost"
-            value={estimatedCost}
-            onChange={(e) =>
-              setEstimatedCost(e.target.value)
-            }
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="number"
+              placeholder="Estimated Cost"
+              value={estimatedCost}
+              onChange={(e) => setEstimatedCost(e.target.value)}
+            />
 
-          <Input
-            type="number"
-            placeholder="Final Cost"
-            value={finalCost}
-            onChange={(e) =>
-              setFinalCost(e.target.value)
-            }
-          />
+            <Input
+              type="number"
+              placeholder="Final Cost"
+              value={finalCost}
+              onChange={(e) => setFinalCost(e.target.value)}
+            />
+          </div>
 
-          <Input
-            placeholder="Status"
-            value={status}
-            onChange={(e) =>
-              setStatus(e.target.value)
-            }
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="number"
+              placeholder="Deposit"
+              value={deposit}
+              onChange={(e) => setDeposit(e.target.value)}
+            />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+            <Input
+              type="date"
+              value={expectedCompletionDate}
+              onChange={(e) => setExpectedCompletionDate(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Priority
+              </label>
+              <select
+                className={selectClassName}
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+              >
+                {REPAIR_PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Status
+              </label>
+              <select
+                className={selectClassName}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {MANUAL_REPAIR_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Saving..." : "Create Repair"}
           </Button>
         </form>
