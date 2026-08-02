@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -116,9 +118,18 @@ export default function RepairTable({
                             onClick={() => handleComplete(repair.id)}
                             disabled={completingId === repair.id}
                           >
-                            {completingId === repair.id
-                              ? "Completing..."
-                              : "Mark Completed"}
+                            {completingId === repair.id ? "Completing..." : "Mark Completed"}
+                          </Button>
+                        )}
+
+                        {ticket && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            nativeButton={false}
+                            render={<Link href={`/tickets/${ticket.id}`} />}
+                          >
+                            View Ticket
                           </Button>
                         )}
 
