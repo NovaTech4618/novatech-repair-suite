@@ -19,6 +19,9 @@ export const ticketService = {
           final_cost,
           deposit,
           completed_at,
+          companies (
+            name
+          ),
           devices (
             brand,
             model,

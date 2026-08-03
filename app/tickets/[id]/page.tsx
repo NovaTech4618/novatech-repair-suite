@@ -27,7 +27,9 @@ export default async function TicketPage({ params }: Props) {
   const customer = Array.isArray(device?.customers)
     ? device.customers[0]
     : device?.customers;
-
+const company = Array.isArray(repair?.companies)
+  ? repair.companies[0]
+  : repair?.companies;
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between print:hidden">
@@ -40,7 +42,7 @@ export default async function TicketPage({ params }: Props) {
       <Card>
         <CardContent className="p-8 space-y-6">
           <div className="text-center border-b pb-6">
-            <h1 className="text-2xl font-bold">Novatech Repair Suite</h1>
+<h1 className="text-2xl font-bold">{company?.name || "Repair Shop"}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Pickup Ticket
             </p>
