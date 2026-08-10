@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { supabase, getCurrentSession } from "@/lib/supabase";
 import { customerService } from "@/services/customerService";
 import type { Customer } from "@/types/customer";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,8 @@ export default function CustomerForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    await getCurrentSession();
 
     setLoading(true);
 

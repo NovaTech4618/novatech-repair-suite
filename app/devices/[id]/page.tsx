@@ -1,24 +1,54 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
+import { getCurrentSession } from "@/lib/supabase";
+import { deviceService } from "@/services/deviceService";
 import AppLayout from "@/components/layout/AppLayout";
 import DeviceRepairs from "@/components/repairs/DeviceRepairs";
-import { deviceService } from "@/services/deviceService";
 
-type Props = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+import type { Device } from "@/types/device";
 
-export default async function DeviceDetailsPage({ params }: Props) {
-  const { id } = await params;
+export default function DeviceDetailsPage() {
+  const params = useParams<{ id: string }>();
+  const [data, setData] = useState<Device | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const { data, error } = await deviceService.getDeviceById(id);
+  useEffect(() => {
+    fetchDevice();
+  }, [params.id]);
 
-  if (error || !data) {
-    notFound();
+  async function fetchDevice() {
+    await getCurrentSession();
+
+    const { data, error } = await deviceService.getDeviceById(params.id);
+
+    setLoading(false);
+
+    if (error || !data) {
+      setNotFound(true);
+      return;
+    }
+
+    setData(data);
+  }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <p className="text-gray-500">Loading...</p>
+      </AppLayout>
+    );
+  }
+
+  if (notFound || !data) {
+    return (
+      <AppLayout>
+        <p className="text-gray-500">Device not found.</p>
+      </AppLayout>
+    );
   }
 
   return (

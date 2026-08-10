@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { getCurrentSession } from "@/lib/supabase";
 import AppLayout from "@/components/layout/AppLayout";
 import { deviceService } from "@/services/deviceService";
 
@@ -33,6 +34,8 @@ export default function DevicesPage() {
   }, []);
 
   async function fetchDevices() {
+    await getCurrentSession();
+
     const { data, error } = await deviceService.getAllDevices();
 
     if (error) {

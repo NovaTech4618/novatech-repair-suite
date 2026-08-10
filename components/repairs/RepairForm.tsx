@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { getCurrentSession } from "@/lib/supabase";
 import { repairService } from "@/services/repairService";
 import { MANUAL_REPAIR_STATUSES, REPAIR_PRIORITIES } from "@/types/repair";
 
@@ -15,8 +16,6 @@ type RepairFormProps = {
   onRepairAdded: () => void;
 };
 
-// No shadcn <Select> component exists in this project yet, so this styling
-// matches the Input component's classes to stay visually consistent.
 const selectClassName =
   "h-8 w-full min-w-0 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-sm outline-none transition-[color,box-shadow] duration-200 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
 
@@ -39,6 +38,8 @@ export default function RepairForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    await getCurrentSession();
 
     if (!issue.trim()) {
       toast.error("Issue is required.");

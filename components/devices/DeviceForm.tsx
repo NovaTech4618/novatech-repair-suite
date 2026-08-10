@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { getCurrentSession } from "@/lib/supabase";
 import { deviceService } from "@/services/deviceService";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,8 @@ export default function DeviceForm({
     e: React.FormEvent
   ) {
     e.preventDefault();
+
+    await getCurrentSession();
 
     if (
       !deviceType.trim() ||

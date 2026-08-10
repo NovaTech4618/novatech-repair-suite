@@ -1,22 +1,54 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
+import { getCurrentSession } from "@/lib/supabase";
 import { customerService } from "@/services/customerService";
 import AppLayout from "@/components/layout/AppLayout";
 import CustomerDevices from "@/components/devices/CustomerDevices";
 
-type Props = {
-  params: Promise<{ id: string }>;
-};
+import type { Customer } from "@/types/customer";
 
-export default async function CustomerDetailsPage({ params }: Props) {
-  const { id } = await params;
+export default function CustomerDetailsPage() {
+  const params = useParams<{ id: string }>();
+  const [data, setData] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const { data, error } = await customerService.getCustomerById(id);
+  useEffect(() => {
+    fetchCustomer();
+  }, [params.id]);
 
-  if (error || !data) {
-    notFound();
+  async function fetchCustomer() {
+    await getCurrentSession();
+
+    const { data, error } = await customerService.getCustomerById(params.id);
+
+    setLoading(false);
+
+    if (error || !data) {
+      setNotFound(true);
+      return;
+    }
+
+    setData(data);
+  }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <p className="text-gray-500">Loading...</p>
+      </AppLayout>
+    );
+  }
+
+  if (notFound || !data) {
+    return (
+      <AppLayout>
+        <p className="text-gray-500">Customer not found.</p>
+      </AppLayout>
+    );
   }
 
   return (
