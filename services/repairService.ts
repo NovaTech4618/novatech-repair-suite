@@ -9,6 +9,15 @@ export const repairService = {
       .order("created_at", { ascending: false });
   },
 
+  async getAllRepairs() {
+    return await supabase
+      .from("repairs")
+      .select(
+        "*, devices(brand, model, customers(full_name)), repair_tickets(id, ticket_number)"
+      )
+      .order("created_at", { ascending: false });
+  },
+
   async addRepair(repair: {
     device_id: string;
     technician: string | null;
