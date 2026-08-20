@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { supabase, getCurrentSession } from "@/lib/supabase";
+import { getCurrentSession } from "@/lib/supabase";
 import { customerService } from "@/services/customerService";
 import type { Customer } from "@/types/customer";
 import { Button } from "@/components/ui/button";
@@ -64,35 +64,24 @@ export default function CustomerForm({
       return;
     }
 
-    if (
-      email.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast.error("Please enter a valid email.");
       setLoading(false);
       return;
     }
 
-    let error;
+    // Empty optional fields are sent as null, not "", so they match the
+    // database's nullable columns and don't corrupt future filtered queries.
+    const payload = {
+      full_name: fullName.trim(),
+      phone: phone.trim(),
+      email: email.trim() || null,
+      address: address.trim() || null,
+    };
 
-    if (editingCustomer) {
-      ({ error } = await customerService.updateCustomer(
-        editingCustomer.id,
-        {
-          full_name: fullName,
-          phone,
-          email,
-          address,
-        }
-      ));
-    } else {
-      ({ error } = await customerService.addCustomer({
-        full_name: fullName,
-        phone,
-        email,
-        address,
-      }));
-    }
+    const { error } = editingCustomer
+      ? await customerService.updateCustomer(editingCustomer.id, payload)
+      : await customerService.addCustomer(payload);
 
     if (error) {
       toast.error(error.message);
@@ -152,11 +141,7 @@ export default function CustomerForm({
           />
 
           <div className="flex gap-2">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={loading} className="flex-1">
               {loading
                 ? "Saving..."
                 : editingCustomer
@@ -165,11 +150,7 @@ export default function CustomerForm({
             </Button>
 
             {editingCustomer && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancelEdit}
-              >
+              <Button type="button" variant="outline" onClick={onCancelEdit}>
                 Cancel
               </Button>
             )}

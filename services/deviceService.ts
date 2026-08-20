@@ -10,11 +10,7 @@ export const deviceService = {
   },
 
   async getDeviceById(id: string) {
-    return await supabase
-      .from("devices")
-      .select("*")
-      .eq("id", id)
-      .single();
+    return await supabase.from("devices").select("*").eq("id", id).single();
   },
 
   async addDevice(device: {
@@ -22,15 +18,13 @@ export const deviceService = {
     device_type: string;
     brand: string;
     model: string;
-    serial_number: string;
-    color: string;
-    condition: string;
-    accessories: string;
+    serial_number: string | null;
+    color: string | null;
+    condition: string | null;
+    accessories: string | null;
     problem: string;
   }) {
-    return await supabase
-      .from("devices")
-      .insert([device]);
+    return await supabase.from("devices").insert([device]);
   },
 
   async updateDevice(
@@ -39,30 +33,24 @@ export const deviceService = {
       device_type: string;
       brand: string;
       model: string;
-      serial_number: string;
-      color: string;
-      condition: string;
-      accessories: string;
+      serial_number: string | null;
+      color: string | null;
+      condition: string | null;
+      accessories: string | null;
       problem: string;
     }
   ) {
-    return await supabase
-      .from("devices")
-      .update(device)
-      .eq("id", id);
+    return await supabase.from("devices").update(device).eq("id", id);
   },
 
   async deleteDevice(id: string) {
-    return await supabase
-      .from("devices")
-      .delete()
-      .eq("id", id);
+    return await supabase.from("devices").delete().eq("id", id);
   },
 
   async getAllDevices() {
-  return await supabase
-    .from("devices")
-    .select("*, customers(full_name)")
-    .order("created_at", { ascending: false });
-},
+    return await supabase
+      .from("devices")
+      .select("*, customers(full_name)")
+      .order("created_at", { ascending: false });
+  },
 };

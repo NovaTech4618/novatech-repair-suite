@@ -19,12 +19,10 @@ export const customerService = {
   async addCustomer(customer: {
     full_name: string;
     phone: string;
-    email: string;
-    address: string;
+    email: string | null;
+    address: string | null;
   }) {
-    return await supabase
-      .from("customers")
-      .insert([customer]);
+    return await supabase.from("customers").insert([customer]);
   },
 
   async updateCustomer(
@@ -32,20 +30,14 @@ export const customerService = {
     customer: {
       full_name: string;
       phone: string;
-      email: string;
-      address: string;
+      email: string | null;
+      address: string | null;
     }
   ) {
-    return await supabase
-      .from("customers")
-      .update(customer)
-      .eq("id", id);
+    return await supabase.from("customers").update(customer).eq("id", id);
   },
 
   async deleteCustomer(id: string) {
-    return await supabase
-      .from("customers")
-      .delete()
-      .eq("id", id);
+    return await supabase.from("customers").delete().eq("id", id);
   },
 };

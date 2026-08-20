@@ -16,16 +16,32 @@ export const dashboardService = {
     return { count: count ?? 0, error };
   },
 
+  // Now combines Sales revenue AND completed-repair revenue for today,
+  // so this is genuinely "total money made today," not just Sales.
   async getTodayRevenue() {
-    const { data, error } = await supabase
-      .from("sales")
-      .select("total")
-      .gte("sale_date", startOfTodayISO());
+    const start = startOfTodayISO();
 
-    if (error) return { total: 0, error };
+    const [salesRes, repairsRes] = await Promise.all([
+      supabase.from("sales").select("total").gte("sale_date", start),
+      supabase
+        .from("repairs")
+        .select("final_cost")
+        .gte("completed_at", start)
+        .not("final_cost", "is", null),
+    ]);
 
-    const total = (data || []).reduce((sum, s) => sum + (s.total || 0), 0);
-    return { total, error: null };
+    if (salesRes.error) return { total: 0, error: salesRes.error };
+
+    const salesTotal = (salesRes.data || []).reduce(
+      (sum, s) => sum + (s.total || 0),
+      0
+    );
+    const repairsTotal = (repairsRes.data || []).reduce(
+      (sum, r) => sum + (r.final_cost || 0),
+      0
+    );
+
+    return { total: salesTotal + repairsTotal, error: null };
   },
 
   async getWaitingCount() {
@@ -49,7 +65,9 @@ export const dashboardService = {
   async getRecentRepairs(limit = 5) {
     return await supabase
       .from("repairs")
-      .select("id, issue, status, created_at, devices(brand, model, customers(full_name))")
+      .select(
+        "id, issue, status, created_at, devices(brand, model, customers(full_name))"
+      )
       .order("created_at", { ascending: false })
       .limit(limit);
   },

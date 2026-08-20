@@ -29,37 +29,29 @@ export default function DeviceForm({
   const [problem, setProblem] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(
-    e: React.FormEvent
-  ) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     await getCurrentSession();
 
-    if (
-      !deviceType.trim() ||
-      !brand.trim() ||
-      !model.trim() ||
-      !problem.trim()
-    ) {
+    if (!deviceType.trim() || !brand.trim() || !model.trim() || !problem.trim()) {
       toast.error("Please fill all required fields.");
       return;
     }
 
     setLoading(true);
 
-    const { error } =
-      await deviceService.addDevice({
-        customer_id: customerId,
-        device_type: deviceType,
-        brand,
-        model,
-        serial_number: serialNumber,
-        color,
-        condition,
-        accessories,
-        problem,
-      });
+    const { error } = await deviceService.addDevice({
+      customer_id: customerId,
+      device_type: deviceType.trim(),
+      brand: brand.trim(),
+      model: model.trim(),
+      serial_number: serialNumber.trim() || null,
+      color: color.trim() || null,
+      condition: condition.trim() || null,
+      accessories: accessories.trim() || null,
+      problem: problem.trim(),
+    });
 
     setLoading(false);
 
@@ -89,82 +81,18 @@ export default function DeviceForm({
       </CardHeader>
 
       <CardContent>
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
-          <Input
-            placeholder="Device Type"
-            value={deviceType}
-            onChange={(e) =>
-              setDeviceType(e.target.value)
-            }
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input placeholder="Device Type" value={deviceType} onChange={(e) => setDeviceType(e.target.value)} />
+          <Input placeholder="Brand" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          <Input placeholder="Model" value={model} onChange={(e) => setModel(e.target.value)} />
+          <Input placeholder="IMEI / Serial Number" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
+          <Input placeholder="Color" value={color} onChange={(e) => setColor(e.target.value)} />
+          <Input placeholder="Condition" value={condition} onChange={(e) => setCondition(e.target.value)} />
+          <Input placeholder="Accessories" value={accessories} onChange={(e) => setAccessories(e.target.value)} />
+          <Input placeholder="Problem Description" value={problem} onChange={(e) => setProblem(e.target.value)} />
 
-          <Input
-            placeholder="Brand"
-            value={brand}
-            onChange={(e) =>
-              setBrand(e.target.value)
-            }
-          />
-
-          <Input
-            placeholder="Model"
-            value={model}
-            onChange={(e) =>
-              setModel(e.target.value)
-            }
-          />
-
-          <Input
-            placeholder="IMEI / Serial Number"
-            value={serialNumber}
-            onChange={(e) =>
-              setSerialNumber(e.target.value)
-            }
-          />
-
-          <Input
-            placeholder="Color"
-            value={color}
-            onChange={(e) =>
-              setColor(e.target.value)
-            }
-          />
-
-          <Input
-            placeholder="Condition"
-            value={condition}
-            onChange={(e) =>
-              setCondition(e.target.value)
-            }
-          />
-
-          <Input
-            placeholder="Accessories"
-            value={accessories}
-            onChange={(e) =>
-              setAccessories(e.target.value)
-            }
-          />
-
-          <Input
-            placeholder="Problem Description"
-            value={problem}
-            onChange={(e) =>
-              setProblem(e.target.value)
-            }
-          />
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading
-              ? "Saving..."
-              : "Save Device"}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Saving..." : "Save Device"}
           </Button>
         </form>
       </CardContent>
