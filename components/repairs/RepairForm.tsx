@@ -5,9 +5,17 @@ import { toast } from "sonner";
 
 import { getCurrentSession } from "@/lib/supabase";
 import { repairService } from "@/services/repairService";
-import { MANUAL_REPAIR_STATUSES, REPAIR_PRIORITIES } from "@/types/repair";
+import {
+  MANUAL_REPAIR_STATUSES,
+  REPAIR_PRIORITIES,
+} from "@/types/repair";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -46,20 +54,62 @@ export default function RepairForm({
       return;
     }
 
+    const estimated = estimatedCost ? Number(estimatedCost) : null;
+    const final = finalCost ? Number(finalCost) : null;
+    const paid = deposit ? Number(deposit) : 0;
+
+    if (estimated !== null && estimated < 0) {
+      toast.error("Estimated cost cannot be negative.");
+      return;
+    }
+
+    if (final !== null && final < 0) {
+      toast.error("Final cost cannot be negative.");
+      return;
+    }
+
+    if (paid < 0) {
+      toast.error("Deposit cannot be negative.");
+      return;
+    }
+
+    if (final !== null && paid > final) {
+      toast.error("Deposit cannot be greater than the final cost.");
+      return;
+    }
+
+    if (
+      !REPAIR_PRIORITIES.includes(
+        priority as (typeof REPAIR_PRIORITIES)[number]
+      )
+    ) {
+      toast.error("Invalid repair priority.");
+      return;
+    }
+
+    if (
+      !MANUAL_REPAIR_STATUSES.includes(
+        status as (typeof MANUAL_REPAIR_STATUSES)[number]
+      )
+    ) {
+      toast.error("Invalid repair status.");
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await repairService.addRepair({
       device_id: deviceId,
       technician: technician.trim() || null,
-      issue,
+      issue: issue.trim(),
       diagnosis: diagnosis.trim() || null,
       repair_notes: repairNotes.trim() || null,
       solution: solution.trim() || null,
       priority,
-      deposit: deposit ? Number(deposit) : 0,
+      deposit: paid,
       expected_completion_date: expectedCompletionDate || null,
-      estimated_cost: estimatedCost ? Number(estimatedCost) : null,
-      final_cost: finalCost ? Number(finalCost) : null,
+      estimated_cost: estimated,
+      final_cost: final,
       status,
     });
 
@@ -128,6 +178,7 @@ export default function RepairForm({
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
+              min="0"
               placeholder="Estimated Cost"
               value={estimatedCost}
               onChange={(e) => setEstimatedCost(e.target.value)}
@@ -135,6 +186,7 @@ export default function RepairForm({
 
             <Input
               type="number"
+              min="0"
               placeholder="Final Cost"
               value={finalCost}
               onChange={(e) => setFinalCost(e.target.value)}
@@ -144,6 +196,7 @@ export default function RepairForm({
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
+              min="0"
               placeholder="Deposit"
               value={deposit}
               onChange={(e) => setDeposit(e.target.value)}
@@ -161,6 +214,7 @@ export default function RepairForm({
               <label className="mb-1 block text-xs text-muted-foreground">
                 Priority
               </label>
+
               <select
                 className={selectClassName}
                 value={priority}
@@ -178,6 +232,7 @@ export default function RepairForm({
               <label className="mb-1 block text-xs text-muted-foreground">
                 Status
               </label>
+
               <select
                 className={selectClassName}
                 value={status}

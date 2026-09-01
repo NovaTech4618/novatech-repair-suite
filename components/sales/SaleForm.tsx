@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -43,7 +44,9 @@ type SaleFormProps = {
 };
 
 export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
-  const [customers, setCustomers] = useState<{ id: string; full_name: string }[]>([]);
+  const [customers, setCustomers] = useState<
+    { id: string; full_name: string }[]
+  >([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [customerId, setCustomerId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
@@ -81,7 +84,7 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
 
     const qty = Number(selectedQty);
 
-    if (!qty || qty <= 0) {
+    if (!Number.isInteger(qty) || qty <= 0) {
       toast.error("Enter a valid quantity.");
       return;
     }
@@ -123,12 +126,32 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
     setCart(cart.filter((c) => c.inventory_id !== inventoryId));
   }
 
-  const subtotal = cart.reduce((sum, c) => sum + c.quantity * c.unit_price, 0);
-  const total = subtotal - (Number(discount) || 0);
+  const subtotal = cart.reduce(
+    (sum, c) => sum + c.quantity * c.unit_price,
+    0
+  );
+
+  const discountAmount = Number(discount) || 0;
+  const total = subtotal - discountAmount;
 
   async function handleCompleteSale() {
     if (cart.length === 0) {
       toast.error("Add at least one item to the cart.");
+      return;
+    }
+
+    if (!Number.isFinite(discountAmount) || discountAmount < 0) {
+      toast.error("Discount cannot be negative.");
+      return;
+    }
+
+    if (discountAmount > subtotal) {
+      toast.error("Discount cannot be greater than the sale subtotal.");
+      return;
+    }
+
+    if (!Number.isFinite(total) || total < 0) {
+      toast.error("Invalid sale total.");
       return;
     }
 
@@ -138,7 +161,7 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
     const { error } = await saleService.createSale({
       customerId: customerId || null,
       paymentMethod,
-      discount: Number(discount) || 0,
+      discount: discountAmount,
       staffName: staffName.trim() || null,
       notes: notes.trim() || null,
       items: cart.map((c) => ({
@@ -177,12 +200,14 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
             <label className="mb-1 block text-xs text-muted-foreground">
               Customer (optional — walk-in if blank)
             </label>
+
             <select
               className={selectClassName}
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
             >
               <option value="">Walk-in customer</option>
+
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.full_name}
@@ -195,6 +220,7 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
             <label className="mb-1 block text-xs text-muted-foreground">
               Payment Method
             </label>
+
             <select
               className={selectClassName}
               value={paymentMethod}
@@ -213,6 +239,7 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
 
         <div>
           <p className="mb-2 text-sm font-medium">Add Items</p>
+
           <div className="flex gap-2">
             <select
               className={selectClassName}
@@ -220,15 +247,19 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
               onChange={(e) => setSelectedItemId(e.target.value)}
             >
               <option value="">Select an item...</option>
+
               {inventory.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.item_name} — ₦{item.selling_price} ({item.quantity} in stock)
+                  {item.item_name} — ₦{item.selling_price} (
+                  {item.quantity} in stock)
                 </option>
               ))}
             </select>
 
             <Input
               type="number"
+              min="1"
+              step="1"
               placeholder="Qty"
               value={selectedQty}
               onChange={(e) => setSelectedQty(e.target.value)}
@@ -252,13 +283,17 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {cart.map((line) => (
                 <TableRow key={line.inventory_id}>
                   <TableCell>{line.item_name}</TableCell>
                   <TableCell>{line.quantity}</TableCell>
                   <TableCell>₦{line.unit_price}</TableCell>
-                  <TableCell>₦{line.quantity * line.unit_price}</TableCell>
+                  <TableCell>
+                    ₦{line.quantity * line.unit_price}
+                  </TableCell>
+
                   <TableCell>
                     <Button
                       size="sm"
@@ -280,8 +315,11 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
             value={staffName}
             onChange={(e) => setStaffName(e.target.value)}
           />
+
           <Input
             type="number"
+            min="0"
+            step="0.01"
             placeholder="Discount"
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
@@ -296,8 +334,13 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
 
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-4">
           <div className="text-sm">
-            <p className="text-muted-foreground">Subtotal: ₦{subtotal}</p>
-            <p className="text-lg font-bold">Total: ₦{total}</p>
+            <p className="text-muted-foreground">
+              Subtotal: ₦{subtotal}
+            </p>
+
+            <p className="text-lg font-bold">
+              Total: ₦{total}
+            </p>
           </div>
 
           <Button onClick={handleCompleteSale} disabled={loading}>
@@ -308,3 +351,4 @@ export default function SaleForm({ onSaleCompleted }: SaleFormProps) {
     </Card>
   );
 }
+

@@ -75,20 +75,51 @@ export default function InventoryForm({
     setNotes("");
   }
 
-async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
 
-  // Ensure the client's session is fully restored before making any
-  // authenticated request — prevents a race on fresh page loads.
-  await getCurrentSession();
+    // Ensure the client's session is fully restored before making any
+    // authenticated request.
+    await getCurrentSession();
 
-  if (!itemName.trim()) {
+    const parsedSellingPrice = Number(sellingPrice);
+    const parsedCostPrice = costPrice ? Number(costPrice) : null;
+    const parsedQuantity = quantity ? Number(quantity) : 0;
+    const parsedMinimumStock = minimumStock ? Number(minimumStock) : 5;
+
+    if (!itemName.trim()) {
       toast.error("Item name is required.");
       return;
     }
 
-    if (!sellingPrice || Number(sellingPrice) <= 0) {
-      toast.error("Selling price is required.");
+    if (!sellingPrice || !Number.isFinite(parsedSellingPrice) || parsedSellingPrice <= 0) {
+      toast.error("Selling price must be greater than 0.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(parsedQuantity) ||
+      parsedQuantity < 0 ||
+      !Number.isInteger(parsedQuantity)
+    ) {
+      toast.error("Quantity cannot be negative and must be a whole number.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(parsedMinimumStock) ||
+      parsedMinimumStock < 0 ||
+      !Number.isInteger(parsedMinimumStock)
+    ) {
+      toast.error("Minimum stock cannot be negative and must be a whole number.");
+      return;
+    }
+
+    if (
+      parsedCostPrice !== null &&
+      (!Number.isFinite(parsedCostPrice) || parsedCostPrice < 0)
+    ) {
+      toast.error("Cost price cannot be negative.");
       return;
     }
 
@@ -100,10 +131,10 @@ async function handleSubmit(e: React.FormEvent) {
       brand: brand.trim() || null,
       compatible_models: compatibleModels.trim() || null,
       sku: sku.trim() || null,
-      selling_price: Number(sellingPrice),
-      cost_price: costPrice ? Number(costPrice) : null,
-      quantity: quantity ? Number(quantity) : 0,
-      minimum_stock: minimumStock ? Number(minimumStock) : 5,
+      selling_price: parsedSellingPrice,
+      cost_price: parsedCostPrice,
+      quantity: parsedQuantity,
+      minimum_stock: parsedMinimumStock,
       supplier: supplier.trim() || null,
       shelf_location: shelfLocation.trim() || null,
       notes: notes.trim() || null,
@@ -168,12 +199,17 @@ async function handleSubmit(e: React.FormEvent) {
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
+              min="0.01"
+              step="0.01"
               placeholder="Selling Price"
               value={sellingPrice}
               onChange={(e) => setSellingPrice(e.target.value)}
+              required
             />
             <Input
               type="number"
+              min="0"
+              step="0.01"
               placeholder="Cost Price"
               value={costPrice}
               onChange={(e) => setCostPrice(e.target.value)}
@@ -183,15 +219,21 @@ async function handleSubmit(e: React.FormEvent) {
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
+              min="0"
+              step="1"
               placeholder="Quantity in Stock"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
+              required
             />
             <Input
               type="number"
+              min="0"
+              step="1"
               placeholder="Minimum Stock (alert threshold)"
               value={minimumStock}
               onChange={(e) => setMinimumStock(e.target.value)}
+              required
             />
           </div>
 
@@ -205,6 +247,12 @@ async function handleSubmit(e: React.FormEvent) {
               placeholder="Shelf Location"
               value={shelfLocation}
               onChange={(e) => setShelfLocation(e.target.value)}
+            />
+            <Input
+              placeholder="Item Name"
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
+              required
             />
           </div>
 
