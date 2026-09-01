@@ -7,19 +7,24 @@ import {
   ArrowDownToLine,
 } from "lucide-react";
 
-import { getCurrentSession } from "@/lib/supabase";
+ 
 import { inventoryService } from "@/services/inventoryService";
-import type { InventoryItem } from "@/types/inventory";
+type LowStockItem = {
+  id: string;
+  item_name: string;
+  quantity: number;
+  minimum_stock: number;
+};
 
 export default function LowStock() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
+ const [items, setItems] = useState<LowStockItem[]>([]);
 
   useEffect(() => {
     fetchLowStock();
   }, []);
 
   async function fetchLowStock() {
-    await getCurrentSession();
+     
 
     const { data } = await inventoryService.getLowStock();
 

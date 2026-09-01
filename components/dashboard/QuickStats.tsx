@@ -8,7 +8,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import { getCurrentSession } from "@/lib/supabase";
 import { dashboardService } from "@/services/dashboardService";
 import DashboardCard from "./DashboardCard";
 
@@ -23,7 +22,7 @@ export default function QuickStats() {
   }, []);
 
   async function fetchStats() {
-    await getCurrentSession();
+     
 
     const [ticketsRes, revenueRes, waitingRes, completedRes] =
       await Promise.all([
@@ -47,7 +46,7 @@ export default function QuickStats() {
 
   const stats = [
     {
-      title: "Today's Tickets",
+      title: "Today's Repairs",
       value: todayTickets,
       icon: Wrench,
       color: "bg-[var(--novatech-primary)]",

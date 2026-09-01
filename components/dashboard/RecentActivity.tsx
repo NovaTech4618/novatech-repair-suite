@@ -7,7 +7,7 @@ import {
   Activity,
 } from "lucide-react";
 
-import { getCurrentSession } from "@/lib/supabase";
+ 
 import { dashboardService } from "@/services/dashboardService";
 
 function getStatusStyle(status: string) {
@@ -54,7 +54,7 @@ export default function RecentActivity() {
   }, []);
 
   async function fetchRecent() {
-    await getCurrentSession();
+     
 
     const { data } = await dashboardService.getRecentRepairs(5);
 
