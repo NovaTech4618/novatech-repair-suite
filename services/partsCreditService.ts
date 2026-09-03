@@ -1,7 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type {
-  PartsCreditInput,
-} from "@/types/partsCredit";
+import type { PartsCreditInput } from "@/types/partsCredit";
 
 export const partsCreditService = {
   async getCredits() {
@@ -28,38 +26,96 @@ export const partsCreditService = {
       .single();
   },
 
-  async addCredit(
-    companyId: string,
-    credit: PartsCreditInput
-  ) {
+  async addCredit(credit: PartsCreditInput) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        data: null,
+        error: new Error("Not authenticated"),
+      };
+    }
+
+    const { data: profile, error: profileError } =
+      await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+    if (profileError || !profile?.company_id) {
+      return {
+        data: null,
+        error:
+          profileError ?? new Error("Company not found"),
+      };
+    }
+
     return await supabase
       .from("parts_credits")
       .insert([
         {
-          company_id: companyId,
+          company_id: profile.company_id,
           ...credit,
         },
       ]);
   },
 
   async addPayment(params: {
-    companyId: string;
     creditId: string;
     amount: number;
     paymentMethod: string | null;
     notes: string | null;
   }) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        data: null,
+        error: new Error("Not authenticated"),
+      };
+    }
+
+    const { data: profile, error: profileError } =
+      await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+    if (profileError || !profile?.company_id) {
+      return {
+        data: null,
+        error:
+          profileError ?? new Error("Company not found"),
+      };
+    }
+
     return await supabase
       .from("credit_payments")
       .insert([
         {
-          company_id: params.companyId,
+          company_id: profile.company_id,
           credit_id: params.creditId,
           amount: params.amount,
           payment_method: params.paymentMethod,
           notes: params.notes,
         },
       ]);
+  },
+
+  async getPayments(creditId: string) {
+    return await supabase
+      .from("credit_payments")
+      .select("*")
+      .eq("credit_id", creditId)
+      .order("payment_date", {
+        ascending: false,
+      });
   },
 
   async deleteCredit(id: string) {
