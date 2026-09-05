@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,6 +13,7 @@ import {
   BarChart3,
   Settings,
   Cpu,
+  Building2,
 } from "lucide-react";
 
 import {
@@ -26,6 +28,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { staffService } from "@/services/staffService";
+import type { StaffRole } from "@/types/staff";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -38,8 +42,23 @@ const navItems = [
   { title: "Technical Services", url: "/technical-services", icon: Cpu },
 ];
 
+// Staff & Branches is management surface — only owners and branch
+// managers should see it in the nav at all. Technicians/front desk
+// never need it, and hiding it avoids confusing them with a page
+// they'd just get blocked from anyway.
+const MANAGE_ROLES: StaffRole[] = ["owner", "branch_manager"];
+
 export default function AppSidebar() {
   const pathname = usePathname();
+  const [myRole, setMyRole] = useState<StaffRole | null>(null);
+
+  useEffect(() => {
+    staffService.getMyRole().then(({ data }) => {
+      if (data) setMyRole(data);
+    });
+  }, []);
+
+  const canManageStaff = myRole ? MANAGE_ROLES.includes(myRole) : false;
 
   return (
     <Sidebar collapsible="icon">
@@ -78,6 +97,18 @@ export default function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          {canManageStaff && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname === "/staff"}
+                tooltip="Staff & Branches"
+                render={<Link href="/staff" />}
+              >
+                <Building2 />
+                <span>Staff & Branches</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton
               isActive={pathname === "/settings"}
