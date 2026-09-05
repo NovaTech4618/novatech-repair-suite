@@ -52,19 +52,12 @@ export default function FinancialPulse() {
         <div>
           <div className="flex items-center gap-2">
             <WalletCards className="size-4 text-[var(--novatech-glass-blue)]" />
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Financial Control
-            </p>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Financial Control</p>
           </div>
           <h2 className="mt-1 font-heading text-lg font-semibold">Today's money movement</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Automatic sales and payment activity plus recorded shop expenses.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Automatic sales, repair payments, customer payments, and recorded shop expenses.</p>
         </div>
-
-        <Link href="/finance" className="rounded-xl border border-[var(--novatech-border)] px-3 py-2 text-xs font-semibold hover:bg-muted">
-          Open full ledger
-        </Link>
+        <Link href="/finance" className="rounded-xl border border-[var(--novatech-border)] px-3 py-2 text-xs font-semibold hover:bg-muted">Open full ledger</Link>
       </div>
 
       {loading ? (
@@ -76,22 +69,14 @@ export default function FinancialPulse() {
       ) : (
         <>
           <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-[var(--novatech-border)] p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowDownLeft className="size-4" /> Money in</div>
-              <p className="mt-2 font-heading text-xl font-bold">{money(totalIn)}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--novatech-border)] p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowUpRight className="size-4" /> Money out</div>
-              <p className="mt-2 font-heading text-xl font-bold">{money(totalOut)}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--novatech-border)] p-4">
-              <p className="text-xs text-muted-foreground">Net movement</p>
-              <p className="mt-2 font-heading text-xl font-bold">{money(net)}</p>
-            </div>
+            <div className="rounded-2xl border border-[var(--novatech-border)] p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowDownLeft className="size-4" /> Money in</div><p className="mt-2 font-heading text-xl font-bold">{money(totalIn)}</p></div>
+            <div className="rounded-2xl border border-[var(--novatech-border)] p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowUpRight className="size-4" /> Money out</div><p className="mt-2 font-heading text-xl font-bold">{money(totalOut)}</p></div>
+            <div className="rounded-2xl border border-[var(--novatech-border)] p-4"><p className="text-xs text-muted-foreground">Net movement</p><p className="mt-2 font-heading text-xl font-bold">{money(net)}</p></div>
           </div>
 
-          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Sales</span><strong className="float-right">{money(Number(summary?.sales_in ?? 0))}</strong></div>
+            <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Repair payments</span><strong className="float-right">{money(Number(summary?.repair_payments_in ?? 0))}</strong></div>
             <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Customer payments</span><strong className="float-right">{money(Number(summary?.customer_payments_in ?? 0))}</strong></div>
             <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Engineer payments received</span><strong className="float-right">{money(Number(summary?.engineer_payments_in ?? 0))}</strong></div>
             <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Paid to engineers</span><strong className="float-right">{money(Number(summary?.engineer_payments_out ?? 0))}</strong></div>
