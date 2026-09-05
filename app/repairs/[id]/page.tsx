@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { repairService } from "@/services/repairService";
+import { repairPartsService, type RepairProfit } from "@/services/repairPartsService";
 
 function money(value: number) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value);
@@ -18,14 +19,20 @@ function money(value: number) {
 export default function RepairDetailPage() {
   const params = useParams<{ id: string }>();
   const [repair, setRepair] = useState<any>(null);
+  const [profit, setProfit] = useState<RepairProfit | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await repairService.getRepairById(params.id);
+    const [{ data, error }, { data: profitRows, error: profitError }] = await Promise.all([
+      repairService.getRepairById(params.id),
+      repairPartsService.getProfit(params.id),
+    ]);
     setLoading(false);
     if (error) { toast.error("Could not load this repair."); return; }
+    if (profitError) toast.error("Repair loaded, but profit metrics could not be calculated.");
     setRepair(data);
+    setProfit(profitRows?.[0] ?? null);
   }
 
   useEffect(() => { if (params.id) void load(); }, [params.id]);
@@ -35,10 +42,13 @@ export default function RepairDetailPage() {
 
   const device = repair.devices;
   const customer = device?.customers;
-  const total = Number(repair.final_cost ?? repair.estimated_cost ?? 0);
-  const paid = Number(repair.deposit ?? 0);
-  const balance = Math.max(total - paid, 0);
+  const total = Number(profit?.revenue ?? repair.final_cost ?? repair.estimated_cost ?? 0);
+  const paid = Number(profit?.amount_paid ?? repair.deposit ?? 0);
+  const balance = Number(profit?.outstanding ?? Math.max(total - paid, 0));
   const ticket = repair.repair_tickets?.[0];
+  const partsCost = Number(profit?.parts_cost ?? 0);
+  const grossProfit = Number(profit?.gross_profit ?? total - partsCost);
+  const margin = Number(profit?.margin_percent ?? (total > 0 ? (grossProfit / total) * 100 : 0));
 
   return (
     <AppLayout>
@@ -52,11 +62,13 @@ export default function RepairDetailPage() {
           <Badge>{repair.status}</Badge>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Repair Total</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(total)}</CardContent></Card>
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Repair Revenue</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(total)}</CardContent></Card>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Parts Cost</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(partsCost)}</CardContent></Card>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Gross Profit</CardTitle></CardHeader><CardContent className={`text-xl font-bold ${grossProfit < 0 ? "text-red-600" : "text-emerald-600"}`}>{money(grossProfit)}</CardContent></Card>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Margin</CardTitle></CardHeader><CardContent className={`text-xl font-bold ${grossProfit < 0 ? "text-red-600" : "text-emerald-600"}`}>{margin.toFixed(1)}%</CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Paid</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(paid)}</CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Outstanding</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(balance)}</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Ticket</CardTitle></CardHeader><CardContent>{ticket ? <Link href={`/tickets/${ticket.id}`} className="font-semibold text-blue-600 hover:underline">{ticket.ticket_number}</Link> : "—"}</CardContent></Card>
         </div>
 
         <Card>
@@ -66,6 +78,7 @@ export default function RepairDetailPage() {
             <div><p className="text-xs text-muted-foreground">Technician</p><p className="mt-1 font-medium">{repair.technician || "Not assigned"}</p></div>
             <div><p className="text-xs text-muted-foreground">Diagnosis</p><p className="mt-1">{repair.diagnosis || "—"}</p></div>
             <div><p className="text-xs text-muted-foreground">Solution</p><p className="mt-1">{repair.solution || "—"}</p></div>
+            <div><p className="sm:col-span-2 text-xs text-muted-foreground">Ticket</p><p className="mt-1">{ticket ? <Link href={`/tickets/${ticket.id}`} className="font-semibold text-blue-600 hover:underline">{ticket.ticket_number}</Link> : "—"}</p></div>
             <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">Repair Notes</p><p className="mt-1 whitespace-pre-wrap">{repair.repair_notes || "—"}</p></div>
           </CardContent>
         </Card>
