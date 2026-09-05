@@ -47,3 +47,17 @@ export type FinancialSummary = {
   other_in: number;
   other_out: number;
 };
+
+export type ProfitSummary = {
+  total_revenue: number;
+  parts_cost: number;
+  operating_expenses: number;
+  engineer_cost: number;
+  net_profit: number;
+  cash_in: number;
+  transfer_in: number;
+  card_in: number;
+  other_in: number;
+  outstanding_customer: number;
+  engineer_outstanding: number;
+};
