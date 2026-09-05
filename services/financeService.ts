@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { FinancialSummary, FinancialTransactionInput, ProfitSummary } from "@/types/finance";
+import type { DailyProfit, FinancialSummary, FinancialTransactionInput, ProfitSummary } from "@/types/finance";
 
 export const financeService = {
   async getTransactions() {
@@ -12,6 +12,10 @@ export const financeService = {
 
   async getProfitSummary(start: string, end: string) {
     return await supabase.rpc("get_profit_summary", { p_start: start, p_end: end }).returns<ProfitSummary[]>();
+  },
+
+  async getDailyProfitTrend(start: string, end: string) {
+    return await supabase.rpc("get_daily_profit_trend", { p_start: start, p_end: end }).returns<DailyProfit[]>();
   },
 
   async createTransaction(input: FinancialTransactionInput) {
