@@ -17,6 +17,14 @@ export const repairService = {
       .single();
   },
 
+  async getRepairProfit(id: string) {
+    const { data, error } = await supabase.rpc("get_repair_profit", {
+      p_repair_id: id,
+    });
+    if (error) return { data: null, error };
+    return { data: Array.isArray(data) ? data[0] ?? null : data, error: null };
+  },
+
   async getAllRepairs() {
     return await supabase
       .from("repairs")
