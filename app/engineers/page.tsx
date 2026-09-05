@@ -20,7 +20,7 @@ const transactionLabel: Record<string, string> = {
 
 const emptyEngineer: EngineerInput = { name: "", phone: "", business_name: "", address: "", notes: "" };
 
-type Action = "parts" | "return" | "payment" | "opening" | null;
+type Action = "parts" | "return" | "payment" | "payment-out" | "opening" | null;
 
 export default function EngineersPage() {
   const [engineers, setEngineers] = useState<Engineer[]>([]);
@@ -176,17 +176,19 @@ export default function EngineersPage() {
       result = action === "parts"
         ? await engineerService.recordPartsOut(selectedId, inventoryId, quantity, price, notes.trim() || null)
         : await engineerService.recordPartsIn(selectedId, inventoryId, quantity, price, notes.trim() || null);
-    } else if (action === "payment") {
+    } else if (action === "payment" || action === "payment-out") {
       const value = Number(amount);
-      if (!value || value <= 0) {
+      if (!Number.isFinite(value) || value <= 0) {
         setError("Enter a valid payment amount.");
         setSaving(false);
         return;
       }
-      result = await engineerService.recordPaymentIn(selectedId, value, paymentMethod, notes.trim() || null);
+      result = action === "payment"
+        ? await engineerService.recordPaymentIn(selectedId, value, paymentMethod, notes.trim() || null)
+        : await engineerService.recordPaymentOut(selectedId, value, paymentMethod, notes.trim() || null);
     } else {
       const value = Number(amount);
-      if (!value || value <= 0) {
+      if (!Number.isFinite(value) || value <= 0) {
         setError("Enter a valid opening balance.");
         setSaving(false);
         return;
@@ -206,8 +208,10 @@ export default function EngineersPage() {
         : action === "return"
           ? "Parts return recorded successfully. Inventory and engineer balance have been updated."
           : action === "payment"
-            ? "Payment recorded successfully."
-            : "Opening balance recorded successfully.";
+            ? "Payment received from engineer recorded successfully."
+            : action === "payment-out"
+              ? "Payment to engineer recorded successfully. Engineer balance has been updated."
+              : "Opening balance recorded successfully.";
     setMessage(successMessage);
     resetAction();
     await Promise.all([load(), selectEngineer(selectedId)]);
@@ -291,7 +295,8 @@ export default function EngineersPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <button type="button" onClick={() => setAction("parts")} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Record parts collected</button>
                 <button type="button" onClick={() => setAction("return")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Record parts returned</button>
-                <button type="button" onClick={() => setAction("payment")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Record payment</button>
+                <button type="button" onClick={() => setAction("payment")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Receive payment</button>
+                <button type="button" onClick={() => setAction("payment-out")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Pay engineer</button>
                 <button type="button" onClick={() => setAction("opening")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Opening balance</button>
               </div>
             </div>
@@ -300,8 +305,19 @@ export default function EngineersPage() {
               <form onSubmit={submitAction} className="border-b bg-muted/30 p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold">{action === "parts" ? "Record parts collected" : action === "return" ? "Record parts returned" : action === "payment" ? "Record payment from engineer" : "Set opening balance"}</h3>
+                    <h3 className="font-semibold">
+                      {action === "parts"
+                        ? "Record parts collected"
+                        : action === "return"
+                          ? "Record parts returned"
+                          : action === "payment"
+                            ? "Receive payment from engineer"
+                            : action === "payment-out"
+                              ? "Pay engineer"
+                              : "Set opening balance"}
+                    </h3>
                     {action === "return" && <p className="mt-1 text-xs text-muted-foreground">Returned stock is added back to inventory and credited to the engineer account.</p>}
+                    {action === "payment-out" && <p className="mt-1 text-xs text-muted-foreground">This records money paid by the shop to the engineer and reduces the engineer&apos;s outstanding balance.</p>}
                   </div>
                   <button type="button" onClick={resetAction} className="text-sm text-muted-foreground">Cancel</button>
                 </div>
@@ -320,12 +336,12 @@ export default function EngineersPage() {
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
-                    <label className="text-sm">Amount<input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-                    {action === "payment" && <label className="text-sm">Payment method<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="pos">POS</option><option value="other">Other</option></select></label>}
+                    <label className="text-sm">Amount<input required type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
+                    {(action === "payment" || action === "payment-out") && <label className="text-sm">Payment method<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="pos">POS</option><option value="other">Other</option></select></label>}
                     <label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
                   </div>
                 )}
-                <button disabled={saving} type="submit" className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving..." : "Save transaction"}</button>
+                <button disabled={saving} type="submit" className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving..." : action === "payment-out" ? "Record payment to engineer" : action === "payment" ? "Record payment received" : "Save transaction"}</button>
               </form>
             )}
 
