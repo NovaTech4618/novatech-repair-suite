@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { FinancialTransactionInput } from "@/types/finance";
+import type { FinancialSummary, FinancialTransactionInput } from "@/types/finance";
 
 export const financeService = {
   async getTransactions() {
@@ -7,6 +7,15 @@ export const financeService = {
       .from("financial_transactions")
       .select("*")
       .order("occurred_at", { ascending: false });
+  },
+
+  async getSummary(start: string, end: string) {
+    return await supabase
+      .rpc("get_financial_summary", {
+        p_start: start,
+        p_end: end,
+      })
+      .returns<FinancialSummary[]>();
   },
 
   async createTransaction(input: FinancialTransactionInput) {
