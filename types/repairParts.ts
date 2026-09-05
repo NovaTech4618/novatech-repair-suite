@@ -19,3 +19,13 @@ export type RepairPartUsage = {
     shelf_location: string | null;
   } | null;
 };
+
+export type RepairProfit = {
+  repair_id: string;
+  revenue: number;
+  parts_cost: number;
+  gross_profit: number;
+  margin_percent: number;
+  amount_paid: number;
+  outstanding: number;
+};
