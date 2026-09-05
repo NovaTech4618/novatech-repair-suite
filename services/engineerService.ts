@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type {
   EngineerAccountSummary,
   EngineerBalance,
+  EngineerInput,
   EngineerTransaction,
 } from "@/types/engineer";
 
@@ -12,6 +13,51 @@ export const engineerService = {
 
   async getEngineer(id: string) {
     return await supabase.from("engineers").select("*").eq("id", id).single();
+  },
+
+  async createEngineer(input: EngineerInput) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
+      .single();
+
+    if (profileError || !profile?.company_id) {
+      return { data: null, error: profileError ?? new Error("Your account is not linked to a company.") };
+    }
+
+    return await supabase
+      .from("engineers")
+      .insert({
+        company_id: profile.company_id,
+        name: input.name.trim(),
+        phone: input.phone?.trim() || null,
+        business_name: input.business_name?.trim() || null,
+        address: input.address?.trim() || null,
+        notes: input.notes?.trim() || null,
+        status: "active",
+      })
+      .select()
+      .single();
+  },
+
+  async updateEngineer(id: string, input: EngineerInput) {
+    return await supabase
+      .from("engineers")
+      .update({
+        name: input.name.trim(),
+        phone: input.phone?.trim() || null,
+        business_name: input.business_name?.trim() || null,
+        address: input.address?.trim() || null,
+        notes: input.notes?.trim() || null,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+  },
+
+  async setEngineerStatus(id: string, status: "active" | "inactive") {
+    return await supabase.from("engineers").update({ status }).eq("id", id).select().single();
   },
 
   async getBalances() {
@@ -36,13 +82,7 @@ export const engineerService = {
       .order("transaction_date", { ascending: false });
   },
 
-  async recordPartsOut(
-    engineerId: string,
-    inventoryId: string,
-    quantity: number,
-    unitPrice?: number,
-    notes?: string | null
-  ) {
+  async recordPartsOut(engineerId: string, inventoryId: string, quantity: number, unitPrice?: number, notes?: string | null) {
     return await supabase.rpc("engineer_parts_out", {
       p_engineer_id: engineerId,
       p_inventory_id: inventoryId,
@@ -52,13 +92,7 @@ export const engineerService = {
     });
   },
 
-  async recordPartsIn(
-    engineerId: string,
-    inventoryId: string,
-    quantity: number,
-    unitPrice: number,
-    notes?: string | null
-  ) {
+  async recordPartsIn(engineerId: string, inventoryId: string, quantity: number, unitPrice: number, notes?: string | null) {
     return await supabase.rpc("engineer_parts_in", {
       p_engineer_id: engineerId,
       p_inventory_id: inventoryId,
@@ -68,12 +102,7 @@ export const engineerService = {
     });
   },
 
-  async recordPaymentIn(
-    engineerId: string,
-    amount: number,
-    paymentMethod?: string | null,
-    notes?: string | null
-  ) {
+  async recordPaymentIn(engineerId: string, amount: number, paymentMethod?: string | null, notes?: string | null) {
     return await supabase.rpc("engineer_payment_in", {
       p_engineer_id: engineerId,
       p_amount: amount,
@@ -82,16 +111,19 @@ export const engineerService = {
     });
   },
 
-  async recordPaymentOut(
-    engineerId: string,
-    amount: number,
-    paymentMethod?: string | null,
-    notes?: string | null
-  ) {
+  async recordPaymentOut(engineerId: string, amount: number, paymentMethod?: string | null, notes?: string | null) {
     return await supabase.rpc("engineer_payment_out", {
       p_engineer_id: engineerId,
       p_amount: amount,
       p_payment_method: paymentMethod ?? null,
+      p_notes: notes ?? null,
+    });
+  },
+
+  async recordOpeningBalance(engineerId: string, amount: number, notes?: string | null) {
+    return await supabase.rpc("engineer_opening_balance", {
+      p_engineer_id: engineerId,
+      p_amount: amount,
       p_notes: notes ?? null,
     });
   },
