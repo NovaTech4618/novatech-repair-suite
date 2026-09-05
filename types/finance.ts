@@ -2,6 +2,7 @@ export type FinancialDirection = "in" | "out";
 
 export type FinancialCategory =
   | "customer_payment"
+  | "sales"
   | "engineer_payment"
   | "part_purchase"
   | "salary"
@@ -31,4 +32,16 @@ export type FinancialTransactionInput = {
   payment_method: string;
   description: string;
   occurred_at?: string;
+};
+
+export type FinancialSummary = {
+  total_in: number;
+  total_out: number;
+  net_movement: number;
+  sales_in: number;
+  customer_payments_in: number;
+  engineer_payments_in: number;
+  engineer_payments_out: number;
+  other_in: number;
+  other_out: number;
 };
