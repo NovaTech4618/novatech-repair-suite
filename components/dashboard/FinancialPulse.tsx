@@ -1,0 +1,103 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowDownLeft, ArrowUpRight, WalletCards } from "lucide-react";
+import { financeService } from "@/services/financeService";
+import type { FinancialSummary } from "@/types/finance";
+
+const money = (value: number) =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(value);
+
+function todayRange() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+export default function FinancialPulse() {
+  const [summary, setSummary] = useState<FinancialSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    const { start, end } = todayRange();
+
+    void financeService.getSummary(start, end).then(({ data, error: resultError }) => {
+      if (!mounted) return;
+      if (resultError) setError(resultError.message);
+      else setSummary(data?.[0] ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const totalIn = Number(summary?.total_in ?? 0);
+  const totalOut = Number(summary?.total_out ?? 0);
+  const net = Number(summary?.net_movement ?? 0);
+
+  return (
+    <section className="rounded-3xl border border-[var(--novatech-border)] bg-[var(--novatech-surface)] p-5 shadow-[var(--novatech-shadow-glass)] sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <WalletCards className="size-4 text-[var(--novatech-glass-blue)]" />
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Financial Control
+            </p>
+          </div>
+          <h2 className="mt-1 font-heading text-lg font-semibold">Today's money movement</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Automatic sales and payment activity plus recorded shop expenses.
+          </p>
+        </div>
+
+        <Link href="/finance" className="rounded-xl border border-[var(--novatech-border)] px-3 py-2 text-xs font-semibold hover:bg-muted">
+          Open full ledger
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          {[1, 2, 3].map((item) => <div key={item} className="h-24 animate-pulse rounded-2xl border border-[var(--novatech-border)]" />)}
+        </div>
+      ) : error ? (
+        <div className="mt-6 rounded-xl border border-destructive/30 p-4 text-sm text-destructive">{error}</div>
+      ) : (
+        <>
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-[var(--novatech-border)] p-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowDownLeft className="size-4" /> Money in</div>
+              <p className="mt-2 font-heading text-xl font-bold">{money(totalIn)}</p>
+            </div>
+            <div className="rounded-2xl border border-[var(--novatech-border)] p-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowUpRight className="size-4" /> Money out</div>
+              <p className="mt-2 font-heading text-xl font-bold">{money(totalOut)}</p>
+            </div>
+            <div className="rounded-2xl border border-[var(--novatech-border)] p-4">
+              <p className="text-xs text-muted-foreground">Net movement</p>
+              <p className="mt-2 font-heading text-xl font-bold">{money(net)}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Sales</span><strong className="float-right">{money(Number(summary?.sales_in ?? 0))}</strong></div>
+            <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Customer payments</span><strong className="float-right">{money(Number(summary?.customer_payments_in ?? 0))}</strong></div>
+            <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Engineer payments received</span><strong className="float-right">{money(Number(summary?.engineer_payments_in ?? 0))}</strong></div>
+            <div className="rounded-xl bg-muted/40 p-3"><span className="text-muted-foreground">Paid to engineers</span><strong className="float-right">{money(Number(summary?.engineer_payments_out ?? 0))}</strong></div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
