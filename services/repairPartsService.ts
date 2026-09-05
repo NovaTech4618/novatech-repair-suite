@@ -1,6 +1,16 @@
 import { supabase } from "@/lib/supabase";
 import type { RepairPartUsage } from "@/types/repairParts";
 
+export type RepairProfit = {
+  repair_id: string;
+  revenue: number;
+  parts_cost: number;
+  gross_profit: number;
+  margin_percent: number;
+  amount_paid: number;
+  outstanding: number;
+};
+
 export const repairPartsService = {
   async getUsage(repairId: string) {
     return await supabase
@@ -11,6 +21,13 @@ export const repairPartsService = {
         data: RepairPartUsage[] | null;
         error: any;
       };
+  },
+
+  async getProfit(repairId: string) {
+    return await supabase.rpc("get_repair_profit", { p_repair_id: repairId }) as {
+      data: RepairProfit[] | null;
+      error: any;
+    };
   },
 
   async recordUsage(repairId: string, inventoryId: string, quantity: number, notes?: string) {
