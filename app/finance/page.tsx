@@ -7,6 +7,7 @@ import type { FinancialCategory, FinancialDirection, FinancialTransaction } from
 
 const money = (value: number) => `₦${Number(value || 0).toLocaleString()}`;
 const labels: Record<string, string> = {
+  sales: "Sales",
   customer_payment: "Customer payment",
   engineer_payment: "Engineer payment",
   part_purchase: "Part purchase",
@@ -15,6 +16,14 @@ const labels: Record<string, string> = {
   utility: "Utility",
   other: "Other",
 };
+
+const manualCategories: Array<[FinancialCategory, string]> = [
+  ["part_purchase", "Part purchase"],
+  ["salary", "Salary"],
+  ["rent", "Rent"],
+  ["utility", "Utility"],
+  ["other", "Other"],
+];
 
 export default function FinancePage() {
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
@@ -91,7 +100,7 @@ export default function FinancePage() {
       <p className="mb-4 text-sm text-muted-foreground">Use this for expenses and income that are not automatically recorded by another NOVATECH workflow.</p>
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <label className="text-sm">Direction<select value={direction} onChange={(e) => setDirection(e.target.value as FinancialDirection)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="out">Money out</option><option value="in">Money in</option></select></label>
-        <label className="text-sm">Category<select value={category} onChange={(e) => setCategory(e.target.value as FinancialCategory)} className="mt-1 w-full rounded-md border bg-background p-2.5">{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label className="text-sm">Category<select value={category} onChange={(e) => setCategory(e.target.value as FinancialCategory)} className="mt-1 w-full rounded-md border bg-background p-2.5">{manualCategories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label className="text-sm">Amount<input required type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
         <label className="text-sm">Payment method<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="pos">POS</option><option value="other">Other</option></select></label>
         <label className="text-sm">Date & time<input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
@@ -101,7 +110,7 @@ export default function FinancePage() {
     </section>
 
     <section className="rounded-xl border">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b p-5"><div><h2 className="font-semibold">Money ledger</h2><p className="text-sm text-muted-foreground">Manual shop-wide financial movements.</p></div><select value={period} onChange={(e) => setPeriod(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm"><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b p-5"><div><h2 className="font-semibold">Money ledger</h2><p className="text-sm text-muted-foreground">Manual shop-wide financial movements plus automatic operational entries.</p></div><select value={period} onChange={(e) => setPeriod(e.target.value)} className="rounded-md border bg-background px-3 py-2 text-sm"><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></div>
       {loading ? <p className="p-8 text-center text-muted-foreground">Loading ledger...</p> : filtered.length === 0 ? <p className="p-8 text-center text-muted-foreground">No financial transactions in this period.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-3">Date</th><th className="p-3">Description</th><th className="p-3">Category</th><th className="p-3">Method</th><th className="p-3 text-right">In</th><th className="p-3 text-right">Out</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} className="border-b last:border-0"><td className="whitespace-nowrap p-3">{new Date(item.occurred_at).toLocaleString()}</td><td className="p-3">{item.description}</td><td className="p-3">{labels[item.category] ?? item.category}</td><td className="p-3 capitalize">{item.payment_method}</td><td className="p-3 text-right">{item.direction === "in" ? money(Number(item.amount)) : "—"}</td><td className="p-3 text-right">{item.direction === "out" ? money(Number(item.amount)) : "—"}</td></tr>)}</tbody></table></div>}
     </section>
   </main>;
