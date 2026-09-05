@@ -61,3 +61,12 @@ export type ProfitSummary = {
   outstanding_customer: number;
   engineer_outstanding: number;
 };
+
+export type DailyProfit = {
+  day: string;
+  revenue: number;
+  parts_cost: number;
+  operating_expenses: number;
+  engineer_cost: number;
+  net_profit: number;
+};
