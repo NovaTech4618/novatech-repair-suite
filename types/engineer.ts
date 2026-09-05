@@ -30,6 +30,8 @@ export type EngineerTransactionType =
   | "adjustment_debit"
   | "adjustment_credit";
 
+export type EngineerPaymentMethod = "cash" | "transfer" | "pos" | "other";
+
 export type EngineerTransaction = {
   id: string;
   company_id: string;
@@ -39,6 +41,7 @@ export type EngineerTransaction = {
   description: string;
   debit: number;
   credit: number;
+  payment_method: EngineerPaymentMethod | null;
   transaction_date: string;
   notes: string | null;
   created_by: string | null;
