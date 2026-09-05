@@ -4,6 +4,7 @@ export type FinancialCategory =
   | "customer_payment"
   | "sales"
   | "engineer_payment"
+  | "repair_payment"
   | "part_purchase"
   | "salary"
   | "rent"
@@ -42,6 +43,7 @@ export type FinancialSummary = {
   customer_payments_in: number;
   engineer_payments_in: number;
   engineer_payments_out: number;
+  repair_payments_in: number;
   other_in: number;
   other_out: number;
 };
