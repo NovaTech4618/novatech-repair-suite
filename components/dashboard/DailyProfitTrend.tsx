@@ -8,12 +8,7 @@ import type { ProfitSummary } from "@/types/finance";
 
 const money = (value: number) => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value);
 
-type Segment = {
-  label: string;
-  value: number;
-  className: string;
-  action: string;
-};
+type Segment = { label: string; value: number; className: string; action: string };
 
 function last7Days() {
   const end = new Date();
@@ -69,6 +64,7 @@ export default function DailyProfitTrend() {
 
   const biggestCost = [...segments.filter((item) => item.label !== "Profit")].sort((a, b) => b.value - a.value)[0];
   const needsAttention = biggestCost && biggestCost.value > 0 && revenue > 0 && biggestCost.value / revenue >= 0.2;
+  const profitIsNegative = profit < 0;
 
   return (
     <section className="rounded-3xl border border-[var(--novatech-border)] bg-[var(--novatech-surface)] p-5 shadow-[var(--novatech-shadow-glass)] sm:p-6">
@@ -85,48 +81,72 @@ export default function DailyProfitTrend() {
       </div>
 
       {loading ? <div className="mt-6 h-64 animate-pulse rounded-2xl border border-[var(--novatech-border)]" /> : error ? <div className="mt-6 rounded-xl border border-destructive/30 p-4 text-sm text-destructive">{error}</div> : (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-center">
-          <div className="relative mx-auto size-56 sm:size-64" aria-label="Seven day business money breakdown">
-            <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(${gradient})` }} />
-            <div className="absolute inset-8 flex flex-col items-center justify-center rounded-full border border-[var(--novatech-border)] bg-[var(--novatech-surface)] text-center shadow-inner">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Net profit</span>
-              <strong className={`mt-1 font-heading text-xl ${profit < 0 ? "text-destructive" : ""}`}>{money(profit)}</strong>
-              <span className="mt-1 text-[10px] text-muted-foreground">7-day total</span>
+        <>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-[var(--novatech-border)] bg-muted/20 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue</p>
+              <p className="mt-2 text-xl font-bold text-foreground sm:text-2xl">{money(revenue)}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-300">Parts Expenses</p>
+              <p className="mt-2 text-xl font-bold text-foreground sm:text-2xl">{money(parts)}</p>
+            </div>
+            <div className={`rounded-2xl border p-4 ${profitIsNegative ? "border-red-500/30 bg-red-500/10" : "border-emerald-500/20 bg-emerald-500/5"}`}>
+              <p className={`text-[11px] font-semibold uppercase tracking-wider ${profitIsNegative ? "text-red-500 dark:text-red-300" : "text-emerald-600 dark:text-emerald-300"}`}>Net Profit</p>
+              <p className={`mt-2 text-xl font-bold sm:text-2xl ${profitIsNegative ? "text-red-500 dark:text-red-300" : "text-emerald-500"}`}>{money(profit)}</p>
             </div>
           </div>
 
-          <div className="space-y-2">
-            {segments.map((segment) => {
-              const percent = chartTotal > 0 ? Math.round((segment.value / chartTotal) * 100) : 0;
-              return (
-                <div key={segment.label} className="rounded-2xl border border-[var(--novatech-border)] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className={`size-2.5 shrink-0 rounded-full ${segment.className}`} />
-                      <span className="truncate text-sm font-semibold">{segment.label}</span>
-                    </div>
-                    <span className="shrink-0 font-semibold">{money(segment.value)}</span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
-                    <span>{percent}% of breakdown</span>
-                    <span className="text-right">{segment.action}</span>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-center">
+            <div className="relative mx-auto size-56 sm:size-64" aria-label="Seven day business money breakdown">
+              <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(${gradient})` }} />
+              <div className={`absolute inset-8 flex flex-col items-center justify-center rounded-full border bg-[var(--novatech-surface)] text-center shadow-inner ${profitIsNegative ? "border-red-500/40" : "border-[var(--novatech-border)]"}`}>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Net profit</span>
+                <strong className={`mt-1 font-heading text-xl ${profitIsNegative ? "text-red-500 dark:text-red-300" : "text-emerald-500"}`}>{money(profit)}</strong>
+                <span className="mt-1 text-[10px] text-muted-foreground">7-day total</span>
+              </div>
+            </div>
 
-            {needsAttention ? (
-              <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                <p><strong>Action:</strong> {biggestCost?.label} is your biggest recorded cost. Check it before assuming higher sales will mean higher profit.</p>
-              </div>
-            ) : (
-              <div className="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-muted-foreground">
-                No major cost category is currently above the 20% revenue warning threshold.
-              </div>
-            )}
+            <div className="space-y-3">
+              {segments.map((segment) => {
+                const percent = chartTotal > 0 ? Math.round((segment.value / chartTotal) * 100) : 0;
+                return (
+                  <div key={segment.label} className="rounded-2xl border border-[var(--novatech-border)] p-3.5">
+                    <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <span className={`size-3 shrink-0 rounded-full ${segment.className}`} />
+                        <span className="min-w-0 text-sm font-semibold text-foreground">{segment.label}</span>
+                      </div>
+                      <span className="shrink-0 text-sm font-bold text-foreground">{money(segment.value)}</span>
+                    </div>
+                    <div className="mt-2.5 flex flex-col gap-1.5 pl-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <span className="shrink-0 text-[11px] font-medium text-muted-foreground">{percent}% of breakdown</span>
+                      <span className="text-xs font-medium leading-relaxed text-foreground/90">{segment.action}</span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {profitIsNegative && (
+                <div className="flex items-start gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-red-500" />
+                  <p className="leading-relaxed text-foreground"><strong className="text-red-500 dark:text-red-300">Loss warning:</strong> the shop is currently below zero for the selected 7-day period. Review parts cost and expenses before chasing more sales.</p>
+                </div>
+              )}
+
+              {needsAttention ? (
+                <div className="flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                  <p className="leading-relaxed text-foreground"><strong>Action:</strong> {biggestCost?.label} is your biggest recorded cost. Check it before assuming higher sales will mean higher profit.</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 text-xs text-muted-foreground">
+                  No major cost category is currently above the 20% revenue warning threshold.
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </section>
   );
