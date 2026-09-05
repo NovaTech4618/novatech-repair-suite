@@ -19,8 +19,29 @@ const transactionLabel: Record<string, string> = {
 };
 
 const emptyEngineer: EngineerInput = { name: "", phone: "", business_name: "", address: "", notes: "" };
-
 type Action = "parts" | "return" | "payment" | "payment-out" | "opening" | null;
+type Period = "all" | "day" | "week" | "month" | "year";
+
+function periodStart(period: Period) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  if (period === "day") return start;
+  if (period === "week") {
+    const day = start.getDay();
+    start.setDate(start.getDate() - (day === 0 ? 6 : day - 1));
+    return start;
+  }
+  if (period === "month") {
+    start.setDate(1);
+    return start;
+  }
+  if (period === "year") {
+    start.setMonth(0, 1);
+    return start;
+  }
+  return null;
+}
 
 export default function EngineersPage() {
   const [engineers, setEngineers] = useState<Engineer[]>([]);
@@ -34,6 +55,7 @@ export default function EngineersPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [action, setAction] = useState<Action>(null);
+  const [period, setPeriod] = useState<Period>("all");
   const [showEngineerForm, setShowEngineerForm] = useState(false);
   const [editingEngineer, setEditingEngineer] = useState<Engineer | null>(null);
   const [engineerForm, setEngineerForm] = useState<EngineerInput>(emptyEngineer);
@@ -47,6 +69,24 @@ export default function EngineersPage() {
   const balanceMap = useMemo(() => new Map(balances.map((item) => [item.engineer_id, item])), [balances]);
   const selectedEngineer = engineers.find((engineer) => engineer.id === selectedId);
   const selectedBalance = selectedId ? balanceMap.get(selectedId) : undefined;
+
+  const filteredTransactions = useMemo(() => {
+    const start = periodStart(period);
+    if (!start) return transactions;
+    return transactions.filter((transaction) => new Date(transaction.transaction_date) >= start);
+  }, [transactions, period]);
+
+  const debitTransactions = useMemo(
+    () => filteredTransactions.filter((transaction) => Number(transaction.debit) > 0),
+    [filteredTransactions],
+  );
+
+  const debitTotal = useMemo(
+    () => debitTransactions.reduce((sum, transaction) => sum + Number(transaction.debit || 0), 0),
+    [debitTransactions],
+  );
+
+  const periodLabel = period === "all" ? "All time" : period === "day" ? "Today" : period === "week" ? "This week" : period === "month" ? "This month" : "This year";
 
   async function load() {
     setLoading(true);
@@ -218,11 +258,28 @@ export default function EngineersPage() {
     setSaving(false);
   }
 
+  function downloadDebitPdf() {
+    if (!selectedEngineer || debitTransactions.length === 0) {
+      setMessage("There are no debit transactions in the selected period to export.");
+      return;
+    }
+    window.print();
+  }
+
   if (loading) return <div className="p-6 text-muted-foreground">Loading engineers...</div>;
 
   return (
     <main className="space-y-6 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <style jsx global>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .engineer-debit-report, .engineer-debit-report * { visibility: visible !important; }
+          .engineer-debit-report { position: absolute; inset: 0; width: 100%; padding: 24px; background: white; color: black; }
+          @page { margin: 12mm; }
+        }
+      `}</style>
+
+      <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Engineers</h1>
           <p className="text-muted-foreground">Track contract technicians, parts collected, returns and payments.</p>
@@ -230,16 +287,32 @@ export default function EngineersPage() {
         <Link href="/dashboard" className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Back to dashboard</Link>
       </div>
 
-      {error && <div className="rounded-md border border-destructive/30 p-3 text-sm text-destructive">{error}</div>}
-      {message && <div className="rounded-md border p-3 text-sm">{message}</div>}
+      {error && <div className="rounded-md border border-destructive/30 p-3 text-sm text-destructive print:hidden">{error}</div>}
+      {message && <div className="rounded-md border p-3 text-sm print:hidden">{message}</div>}
+
+      <section className="engineer-debit-report hidden print:block">
+        <div className="mb-6 border-b pb-4">
+          <h1 className="text-2xl font-bold">NOVATECH — Engineer Debit Statement</h1>
+          <p className="mt-1 text-lg font-semibold">Engineer: {selectedEngineer?.name ?? ""}</p>
+          <p>Period: {periodLabel}</p>
+          {selectedEngineer?.phone && <p>Phone: {selectedEngineer.phone}</p>}
+        </div>
+        <div className="mb-5 grid grid-cols-3 gap-4">
+          <div className="rounded border p-3"><p className="text-xs">Debit transactions</p><p className="text-xl font-bold">{debitTransactions.length}</p></div>
+          <div className="rounded border p-3"><p className="text-xs">Period debit</p><p className="text-xl font-bold">{money(debitTotal)}</p></div>
+          <div className="rounded border p-3"><p className="text-xs">Current outstanding balance</p><p className="text-xl font-bold">{money(Number(selectedBalance?.balance ?? 0))}</p></div>
+        </div>
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="border-b-2"><th className="p-2 text-left">Date</th><th className="p-2 text-left">Description</th><th className="p-2 text-left">Type</th><th className="p-2 text-right">Debit</th></tr></thead>
+          <tbody>{debitTransactions.map((transaction) => <tr key={transaction.id} className="border-b"><td className="p-2">{new Date(transaction.transaction_date).toLocaleDateString()}</td><td className="p-2">{transaction.description}</td><td className="p-2">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td><td className="p-2 text-right">{money(Number(transaction.debit))}</td></tr>)}</tbody>
+        </table>
+        <div className="mt-8 border-t pt-4 text-xs">Generated from NOVATECH Repair Suite • {new Date().toLocaleString()}</div>
+      </section>
 
       {showEngineerForm && (
-        <form onSubmit={submitEngineer} className="rounded-xl border bg-muted/20 p-5">
+        <form onSubmit={submitEngineer} className="rounded-xl border bg-muted/20 p-5 print:hidden">
           <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold">{editingEngineer ? "Edit engineer" : "Add engineer"}</h2>
-              <p className="text-sm text-muted-foreground">Account history is preserved when an engineer is deactivated.</p>
-            </div>
+            <div><h2 className="font-semibold">{editingEngineer ? "Edit engineer" : "Add engineer"}</h2><p className="text-sm text-muted-foreground">Account history is preserved when an engineer is deactivated.</p></div>
             <button type="button" onClick={() => setShowEngineerForm(false)} className="text-sm text-muted-foreground">Cancel</button>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -253,108 +326,33 @@ export default function EngineersPage() {
         </form>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] print:hidden">
         <section className="rounded-xl border">
-          <div className="flex items-center justify-between gap-3 border-b p-5">
-            <div><h2 className="font-semibold">Engineer accounts</h2><p className="text-sm text-muted-foreground">Balance = debit minus credit.</p></div>
-            <button type="button" onClick={openCreate} className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground">+ Add Engineer</button>
-          </div>
+          <div className="flex items-center justify-between gap-3 border-b p-5"><div><h2 className="font-semibold">Engineer accounts</h2><p className="text-sm text-muted-foreground">Balance = debit minus credit.</p></div><button type="button" onClick={openCreate} className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground">+ Add Engineer</button></div>
           <div className="divide-y">
             {engineers.length === 0 ? <div className="p-8 text-center text-muted-foreground">No engineers found.</div> : engineers.map((engineer) => {
               const balance = balanceMap.get(engineer.id);
-              return (
-                <div key={engineer.id} className={`p-4 transition hover:bg-muted/50 ${selectedId === engineer.id ? "bg-muted" : ""}`}>
-                  <div className="flex items-start gap-3">
-                    <button type="button" onClick={() => void selectEngineer(engineer.id)} className="min-w-0 flex-1 text-left">
-                      <div className="flex items-center justify-between gap-4">
-                        <div><p className="font-medium">{engineer.name}</p><p className="text-sm text-muted-foreground">{engineer.phone || engineer.business_name || "No contact details"}</p></div>
-                        <span className={`font-semibold ${Number(balance?.balance ?? 0) > 0 ? "text-destructive" : ""}`}>{money(Number(balance?.balance ?? 0))}</span>
-                      </div>
-                      <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span className="capitalize">{engineer.status}</span><span>{Number(balance?.total_debit ?? 0) > 0 ? `${money(Number(balance?.total_debit))} debits` : "No activity"}</span></div>
-                    </button>
-                    <div className="flex shrink-0 gap-1">
-                      <button type="button" onClick={() => openEdit(engineer)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">Edit</button>
-                      <button disabled={saving} type="button" onClick={() => void toggleStatus(engineer)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted disabled:opacity-50">{engineer.status === "active" ? "Deactivate" : "Activate"}</button>
-                    </div>
-                  </div>
-                </div>
-              );
+              return <div key={engineer.id} className={`p-4 transition hover:bg-muted/50 ${selectedId === engineer.id ? "bg-muted" : ""}`}><div className="flex items-start gap-3"><button type="button" onClick={() => void selectEngineer(engineer.id)} className="min-w-0 flex-1 text-left"><div className="flex items-center justify-between gap-4"><div><p className="font-medium">{engineer.name}</p><p className="text-sm text-muted-foreground">{engineer.phone || engineer.business_name || "No contact details"}</p></div><span className={`font-semibold ${Number(balance?.balance ?? 0) > 0 ? "text-destructive" : ""}`}>{money(Number(balance?.balance ?? 0))}</span></div><div className="mt-2 flex justify-between text-xs text-muted-foreground"><span className="capitalize">{engineer.status}</span><span>{Number(balance?.total_debit ?? 0) > 0 ? `${money(Number(balance?.total_debit))} debits` : "No activity"}</span></div></button><div className="flex shrink-0 gap-1"><button type="button" onClick={() => openEdit(engineer)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">Edit</button><button disabled={saving} type="button" onClick={() => void toggleStatus(engineer)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted disabled:opacity-50">{engineer.status === "active" ? "Deactivate" : "Activate"}</button></div></div></div>;
             })}
           </div>
         </section>
 
         <section className="rounded-xl border">
-          {!selectedEngineer ? (
-            <div className="flex min-h-[420px] items-center justify-center p-8 text-center text-muted-foreground">Select an engineer to view their ledger.</div>
-          ) : <>
+          {!selectedEngineer ? <div className="flex min-h-[420px] items-center justify-center p-8 text-center text-muted-foreground">Select an engineer to view their ledger.</div> : <>
             <div className="border-b p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div><h2 className="text-xl font-semibold">{selectedEngineer.name}</h2><p className="text-sm text-muted-foreground">{selectedEngineer.phone || "No phone number"}</p></div>
-                <div className="text-right"><p className="text-xs text-muted-foreground">Current balance</p><p className={`text-2xl font-bold ${Number(selectedBalance?.balance ?? 0) > 0 ? "text-destructive" : ""}`}>{money(Number(selectedBalance?.balance ?? 0))}</p></div>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={() => setAction("parts")} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Record parts collected</button>
-                <button type="button" onClick={() => setAction("return")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Record parts returned</button>
-                <button type="button" onClick={() => setAction("payment")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Receive payment</button>
-                <button type="button" onClick={() => setAction("payment-out")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Pay engineer</button>
-                <button type="button" onClick={() => setAction("opening")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Opening balance</button>
-              </div>
+              <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">{selectedEngineer.name}</h2><p className="text-sm text-muted-foreground">{selectedEngineer.phone || "No phone number"}</p></div><div className="text-right"><p className="text-xs text-muted-foreground">Current balance</p><p className={`text-2xl font-bold ${Number(selectedBalance?.balance ?? 0) > 0 ? "text-destructive" : ""}`}>{money(Number(selectedBalance?.balance ?? 0))}</p></div></div>
+              <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => setAction("parts")} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Record parts collected</button><button type="button" onClick={() => setAction("return")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Record parts returned</button><button type="button" onClick={() => setAction("payment")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Receive payment</button><button type="button" onClick={() => setAction("payment-out")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Pay engineer</button><button type="button" onClick={() => setAction("opening")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Opening balance</button></div>
             </div>
 
-            {action && (
-              <form onSubmit={submitAction} className="border-b bg-muted/30 p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">
-                      {action === "parts"
-                        ? "Record parts collected"
-                        : action === "return"
-                          ? "Record parts returned"
-                          : action === "payment"
-                            ? "Receive payment from engineer"
-                            : action === "payment-out"
-                              ? "Pay engineer"
-                              : "Set opening balance"}
-                    </h3>
-                    {action === "return" && <p className="mt-1 text-xs text-muted-foreground">Returned stock is added back to inventory and credited to the engineer account.</p>}
-                    {action === "payment-out" && <p className="mt-1 text-xs text-muted-foreground">This records money paid by the shop to the engineer and reduces the engineer&apos;s outstanding balance.</p>}
-                  </div>
-                  <button type="button" onClick={resetAction} className="text-sm text-muted-foreground">Cancel</button>
-                </div>
-
-                {(action === "parts" || action === "return") ? (
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <label className="text-sm md:col-span-2">Part
-                      <select value={inventoryId} onChange={(e) => { setInventoryId(e.target.value); const item = inventory.find((x) => x.id === e.target.value); setUnitPrice(item ? String(item.selling_price) : ""); }} className="mt-1 w-full rounded-md border bg-background p-2.5">
-                        <option value="">Select part</option>
-                        {inventory.map((item) => <option key={item.id} value={item.id}>{item.item_name} — {money(item.selling_price)} (stock: {item.quantity})</option>)}
-                      </select>
-                    </label>
-                    <label className="text-sm">Quantity<input type="number" min="1" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-                    <label className="text-sm">Unit price<input type="number" min="0" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-                    <label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="text-sm">Amount<input required type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-                    {(action === "payment" || action === "payment-out") && <label className="text-sm">Payment method<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="pos">POS</option><option value="other">Other</option></select></label>}
-                    <label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-                  </div>
-                )}
-                <button disabled={saving} type="submit" className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving..." : action === "payment-out" ? "Record payment to engineer" : action === "payment" ? "Record payment received" : "Save transaction"}</button>
-              </form>
-            )}
+            {action && <form onSubmit={submitAction} className="border-b bg-muted/30 p-5"><div className="mb-4 flex items-center justify-between"><div><h3 className="font-semibold">{action === "parts" ? "Record parts collected" : action === "return" ? "Record parts returned" : action === "payment" ? "Receive payment from engineer" : action === "payment-out" ? "Pay engineer" : "Set opening balance"}</h3>{action === "return" && <p className="mt-1 text-xs text-muted-foreground">Returned stock is added back to inventory and credited to the engineer account.</p>}{action === "payment-out" && <p className="mt-1 text-xs text-muted-foreground">This records money paid by the shop to the engineer and reduces the engineer&apos;s outstanding balance.</p>}</div><button type="button" onClick={resetAction} className="text-sm text-muted-foreground">Cancel</button></div>
+              {(action === "parts" || action === "return") ? <div className="grid gap-4 md:grid-cols-3"><label className="text-sm md:col-span-2">Part<select value={inventoryId} onChange={(e) => { setInventoryId(e.target.value); const item = inventory.find((x) => x.id === e.target.value); setUnitPrice(item ? String(item.selling_price) : ""); }} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="">Select part</option>{inventory.map((item) => <option key={item.id} value={item.id}>{item.item_name} — {money(item.selling_price)} (stock: {item.quantity})</option>)}</select></label><label className="text-sm">Quantity<input type="number" min="1" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label><label className="text-sm">Unit price<input type="number" min="0" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label><label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label></div> : <div className="grid gap-4 md:grid-cols-2"><label className="text-sm">Amount<input required type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>{(action === "payment" || action === "payment-out") && <label className="text-sm">Payment method<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="pos">POS</option><option value="other">Other</option></select></label>}<label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label></div>}
+              <button disabled={saving} type="submit" className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving..." : action === "payment-out" ? "Record payment to engineer" : action === "payment" ? "Record payment received" : "Save transaction"}</button>
+            </form>}
 
             <div className="p-5">
-              <div className="mb-4 flex items-center justify-between"><h3 className="font-semibold">Transaction history</h3><span className="text-sm text-muted-foreground">{transactions.length} transactions</span></div>
-              {detailLoading ? <p className="py-8 text-center text-muted-foreground">Loading ledger...</p> : transactions.length === 0 ? <p className="rounded-md border border-dashed p-8 text-center text-muted-foreground">No transactions yet.</p> : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b text-left"><th className="p-3">Date</th><th className="p-3">Description</th><th className="p-3">Type</th><th className="p-3 text-right">Debit</th><th className="p-3 text-right">Credit</th><th className="p-3 text-right">Balance</th></tr></thead>
-                    <tbody>{[...transactions].reverse().map((transaction, index, chronological) => { const running = chronological.slice(0, index + 1).reduce((sum, row) => sum + Number(row.debit) - Number(row.credit), 0); return <tr key={transaction.id} className="border-b last:border-0"><td className="whitespace-nowrap p-3">{new Date(transaction.transaction_date).toLocaleDateString()}</td><td className="p-3">{transaction.description}</td><td className="p-3">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td><td className="p-3 text-right">{Number(transaction.debit) ? money(Number(transaction.debit)) : "—"}</td><td className="p-3 text-right">{Number(transaction.credit) ? money(Number(transaction.credit)) : "—"}</td><td className="p-3 text-right font-medium">{money(running)}</td></tr>; })}</tbody>
-                  </table>
-                </div>
-              )}
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Transaction history</h3><span className="text-sm text-muted-foreground">{filteredTransactions.length} of {transactions.length} transactions</span></div><div className="flex flex-wrap gap-2"><select aria-label="Filter transaction period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} className="rounded-md border bg-background px-3 py-2 text-sm"><option value="all">All time</option><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option></select><button type="button" onClick={downloadDebitPdf} className="rounded-md border px-3 py-2 text-sm hover:bg-muted">Download debit PDF</button></div></div>
+              <div className="mb-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Period</p><p className="font-semibold">{periodLabel}</p></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Period debits</p><p className="font-semibold">{money(debitTotal)}</p></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Current balance</p><p className="font-semibold">{money(Number(selectedBalance?.balance ?? 0))}</p></div></div>
+              {detailLoading ? <p className="py-8 text-center text-muted-foreground">Loading ledger...</p> : filteredTransactions.length === 0 ? <p className="rounded-md border border-dashed p-8 text-center text-muted-foreground">No transactions in this period.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-3">Date</th><th className="p-3">Description</th><th className="p-3">Type</th><th className="p-3 text-right">Debit</th><th className="p-3 text-right">Credit</th><th className="p-3 text-right">Balance</th></tr></thead><tbody>{[...filteredTransactions].reverse().map((transaction, index, chronological) => { const running = chronological.slice(0, index + 1).reduce((sum, row) => sum + Number(row.debit) - Number(row.credit), 0); return <tr key={transaction.id} className="border-b last:border-0"><td className="whitespace-nowrap p-3">{new Date(transaction.transaction_date).toLocaleDateString()}</td><td className="p-3">{transaction.description}</td><td className="p-3">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td><td className="p-3 text-right">{Number(transaction.debit) ? money(Number(transaction.debit)) : "—"}</td><td className="p-3 text-right">{Number(transaction.credit) ? money(Number(transaction.credit)) : "—"}</td><td className="p-3 text-right font-medium">{money(running)}</td></tr>; })}</tbody></table></div>}
             </div>
           </>}
         </section>
