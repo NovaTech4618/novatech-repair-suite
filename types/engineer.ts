@@ -13,6 +13,14 @@ export type Engineer = {
   updated_at: string;
 };
 
+export type EngineerInput = {
+  name: string;
+  phone?: string | null;
+  business_name?: string | null;
+  address?: string | null;
+  notes?: string | null;
+};
+
 export type EngineerTransactionType =
   | "parts_out"
   | "parts_in"
