@@ -16,9 +16,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   // After any successful sign-in, make sure this user actually has a
-  // company. If not (e.g. they confirmed their email outside the app,
-  // or something failed during signup), send them to setup instead of
-  // straight to the dashboard.
+  // company. If not, first check whether they were invited to join an
+  // existing shop (accept_staff_invitation) before falling back to
+  // "set up a new business" — otherwise every invited staff member would
+  // accidentally spin up their own separate company on first login.
   async function ensureCompanyThenRedirect() {
     const {
       data: { user },
@@ -35,13 +36,25 @@ export default function LoginPage() {
       .eq("id", user.id)
       .maybeSingle();
 
+    if (profile?.company_id) {
+      setLoading(false);
+      router.push("/dashboard");
+      return;
+    }
+
+    const { data: joinedCompanyId, error: inviteError } = await supabase.rpc(
+      "accept_staff_invitation"
+    );
+
     setLoading(false);
 
-    if (profile?.company_id) {
+    if (!inviteError && joinedCompanyId) {
+      toast.success("Welcome to the team!");
       router.push("/dashboard");
-    } else {
-      setMode("setup");
+      return;
     }
+
+    setMode("setup");
   }
 
   async function handleCreateCompany(e: React.FormEvent) {
@@ -97,8 +110,7 @@ export default function LoginPage() {
         return;
       }
 
-      setMode("setup");
-      setLoading(false);
+      await ensureCompanyThenRedirect();
       return;
     }
 
