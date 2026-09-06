@@ -4,33 +4,34 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* NOVATECH DESIGN SYSTEM
+   Direction: Midnight Slate + Electric Teal
+   Calm workspace surfaces, one strong brand accent, and restrained status colors. */
 :root {
-  --novatech-primary: #0F6B4C;
-  --novatech-primary-light: #178A61;
-  --novatech-copper: #B5652A;
-  --novatech-glass-blue: #5FA8D3;
+  --novatech-primary: #0f766e;
+  --novatech-primary-light: #14b8a6;
+  --novatech-primary-dark: #115e59;
+  --novatech-ink: #0f172a;
+  --novatech-slate: #475569;
+  --novatech-cyan: #22d3ee;
+  --novatech-background: #f7f9f8;
+  --novatech-surface: #0f172a;
+  --novatech-surface-alt: #172033;
+  --novatech-border: #e2e8f0;
+  --novatech-success: #16a34a;
+  --novatech-warning: #d97706;
+  --novatech-danger: #dc2626;
+  --novatech-info: #0284c7;
 
-  --novatech-background: #07120F;
-  --novatech-surface: #0D1F19;
-  --novatech-surface-alt: #132922;
+  --novatech-radius-sm: 10px;
+  --novatech-radius-md: 14px;
+  --novatech-radius-lg: 18px;
+  --novatech-radius-xl: 24px;
 
-  --novatech-border: rgba(95, 168, 211, 0.15);
-
-  --novatech-success: #16A34A;
-  --novatech-warning: #F59E0B;
-  --novatech-danger: #DC2626;
-
-  --novatech-radius-sm: 12px;
-  --novatech-radius-md: 18px;
-  --novatech-radius-lg: 24px;
-  --novatech-radius-xl: 32px;
-
-  --novatech-shadow-glass:
-    0 8px 30px rgba(0, 0, 0, 0.25),
-    inset 0 1px rgba(255, 255, 255, 0.05);
-
-  --novatech-shadow-glow:
-    0 0 40px rgba(15, 107, 76, 0.18);
+  --novatech-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --novatech-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --novatech-shadow-glass: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --novatech-shadow-glow: 0 0 32px rgba(20, 184, 166, 0.14);
 }
 
 @theme inline {
@@ -68,139 +69,147 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.7);
+  --radius-md: calc(var(--radius) * 0.9);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.65);
+  --radius-3xl: calc(var(--radius) * 2);
+  --radius-4xl: calc(var(--radius) * 2.4);
 }
 
 :root {
-  /* Circuit-board + repair-glass identity */
-  --background: #faf9f6;
-  --foreground: #161b22;
+  --background: #f7f9f8;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #161b22;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #161b22;
-  --primary: #0f6b4c;
+  --popover-foreground: #0f172a;
+  --primary: #0f766e;
   --primary-foreground: #ffffff;
-  --secondary: #f1f0ec;
-  --secondary-foreground: #161b22;
-  --muted: #f1f0ec;
-  --muted-foreground: #6b7280;
-  --accent: #eaf3ef;
-  --accent-foreground: #0f6b4c;
-  --destructive: #b3261e;
-  --border: #e4e2dc;
-  --input: #e4e2dc;
-  --ring: #0f6b4c;
-  --chart-1: #0f6b4c;
-  --chart-2: #b5652a;
-  --chart-3: #5fa8d3;
-  --chart-4: #6b7280;
-  --chart-5: #161b22;
-  --radius: 0.75rem;
+  --secondary: #eef2f1;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f4;
+  --muted-foreground: #64748b;
+  --accent: #e6f7f4;
+  --accent-foreground: #0f766e;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #14b8a6;
+  --chart-1: #0f766e;
+  --chart-2: #0ea5e9;
+  --chart-3: #8b5cf6;
+  --chart-4: #d97706;
+  --chart-5: #64748b;
+  --radius: 0.875rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #161b22;
-  --sidebar-primary: #0f6b4c;
+  --sidebar-foreground: #334155;
+  --sidebar-primary: #0f766e;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaf3ef;
-  --sidebar-accent-foreground: #0f6b4c;
-  --sidebar-border: #e4e2dc;
-  --sidebar-ring: #0f6b4c;
+  --sidebar-accent: #e6f7f4;
+  --sidebar-accent-foreground: #0f766e;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #14b8a6;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0b1120;
+  --foreground: #f8fafc;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+  --primary: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #133b3a;
+  --accent-foreground: #99f6e4;
+  --destructive: #f87171;
+  --border: #263244;
+  --input: #334155;
+  --ring: #2dd4bf;
+  --chart-1: #2dd4bf;
+  --chart-2: #38bdf8;
+  --chart-3: #a78bfa;
+  --chart-4: #f59e0b;
+  --chart-5: #94a3b8;
+  --sidebar: #0f172a;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #042f2e;
+  --sidebar-accent: #133b3a;
+  --sidebar-accent-foreground: #99f6e4;
+  --sidebar-border: #263244;
+  --sidebar-ring: #2dd4bf;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
   html {
     @apply font-sans;
   }
+
+  ::selection {
+    background: #ccfbf1;
+    color: #134e4a;
+  }
 }
 
-/* ---- Signature: glass panel with a diagnostic scan-line sweep ----
-   Applies to shadcn Card components (data-slot="card") and any
-   element given the .glass-panel class. Kept to a single quiet
-   moment on hover — not decorating everything, just this one signal. */
+/* Cards are clean surfaces now: no blur, no rainbow borders, no hover sweep. */
 [data-slot="card"],
 .glass-panel {
   position: relative;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--card) 92%, transparent),
-    color-mix(in srgb, var(--card) 78%, transparent)
-  );
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid color-mix(in srgb, #5fa8d3 22%, transparent);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--novatech-shadow-card);
   overflow: hidden;
 }
 
-[data-slot="card"]::before,
-.glass-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 42%,
-    color-mix(in srgb, #5fa8d3 16%, transparent) 50%,
-    transparent 58%
-  );
-  transform: translateX(-120%);
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
+/* Consistent form controls across the suite. */
+input,
+textarea,
+select {
+  color-scheme: light;
 }
 
-[data-slot="card"]:hover::before,
-.glass-panel:hover::before {
-  transform: translateX(120%);
+button,
+a,
+input,
+textarea,
+select {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="card"]::before,
-  .glass-panel::before {
-    display: none;
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
