@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Wrench,
-  Wallet,
-  Clock3,
-  CheckCircle2,
-} from "lucide-react";
+import { Wrench, Wallet, Clock3, CheckCircle2 } from "lucide-react";
 
 import { dashboardService } from "@/services/dashboardService";
 import DashboardCard from "./DashboardCard";
@@ -22,15 +17,12 @@ export default function QuickStats() {
   }, []);
 
   async function fetchStats() {
-     
-
-    const [ticketsRes, revenueRes, waitingRes, completedRes] =
-      await Promise.all([
-        dashboardService.getTodayTicketsCount(),
-        dashboardService.getTodayRevenue(),
-        dashboardService.getWaitingCount(),
-        dashboardService.getCompletedTodayCount(),
-      ]);
+    const [ticketsRes, revenueRes, waitingRes, completedRes] = await Promise.all([
+      dashboardService.getTodayTicketsCount(),
+      dashboardService.getTodayRevenue(),
+      dashboardService.getWaitingCount(),
+      dashboardService.getCompletedTodayCount(),
+    ]);
 
     setTodayTickets(ticketsRes.count);
     setRevenue(revenueRes.total);
@@ -45,34 +37,10 @@ export default function QuickStats() {
   }).format(revenue);
 
   const stats = [
-    {
-      title: "Today's Repairs",
-      value: todayTickets,
-      icon: Wrench,
-      color: "bg-[var(--novatech-primary)]",
-      label: "Workshop intake",
-    },
-    {
-      title: "Revenue Today",
-      value: formattedRevenue,
-      icon: Wallet,
-      color: "bg-[var(--novatech-copper)]",
-      label: "Sales + repairs",
-    },
-    {
-      title: "Waiting",
-      value: waiting,
-      icon: Clock3,
-      color: "bg-[var(--novatech-glass-blue)]",
-      label: "Needs attention",
-    },
-    {
-      title: "Completed Today",
-      value: completedToday,
-      icon: CheckCircle2,
-      color: "bg-[var(--novatech-surface-alt)]",
-      label: "Ready / completed",
-    },
+    { title: "Today's Repairs", value: todayTickets, icon: Wrench, color: "bg-teal-600", label: "Workshop intake" },
+    { title: "Revenue Today", value: formattedRevenue, icon: Wallet, color: "bg-slate-900", label: "Sales + repairs" },
+    { title: "Waiting", value: waiting, icon: Clock3, color: "bg-sky-600", label: "Needs attention" },
+    { title: "Completed Today", value: completedToday, icon: CheckCircle2, color: "bg-emerald-600", label: "Ready / completed" },
   ];
 
   return (
