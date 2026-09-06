@@ -20,8 +20,12 @@ export default function RepairPartsPage() {
               Issue parts to this repair, return unused parts, and keep inventory and COGS accurate.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/repairs">Back to Repairs</Link>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href="/repairs" />}
+          >
+            Back to Repairs
           </Button>
         </div>
         <RepairPartsPanel repairId={repairId} />
