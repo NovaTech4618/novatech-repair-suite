@@ -1,0 +1,72 @@
+-- Keep customer receivables synchronized with core repairs, sales and payments.
+create unique index if not exists customer_debt_source_unique on public.customer_debt_ledger(company_id,source_type,source_id) where source_id is not null;
+
+create or replace function public.sync_repair_customer_debt()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare cid uuid; total numeric; paid numeric;
+begin
+ select customer_id,coalesce(final_cost,estimated_cost,0),coalesce(deposit,0) into cid,total,paid from public.repairs where id=new.id;
+ if cid is not null then
+   insert into public.customer_debt_ledger(company_id,branch_id,customer_id,source_type,source_id,debit,credit,notes,created_by)
+   values(new.company_id,new.branch_id,cid,'repair',new.id,greatest(total,0),greatest(paid,0),'Repair charge / deposit',auth.uid())
+   on conflict do nothing;
+ end if;
+ return new;
+end; $$;
+
+drop trigger if exists repair_customer_debt_sync on public.repairs;
+create trigger repair_customer_debt_sync after insert on public.repairs for each row execute function public.sync_repair_customer_debt();
+
+create or replace function public.sync_sale_customer_debt()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare cid uuid; amount numeric; paid numeric;
+begin
+ cid:=new.customer_id; amount:=coalesce(new.total,0); paid:=case when lower(coalesce(new.payment_method,'')) in('cash','card','transfer','pos','bank transfer') then amount else 0 end;
+ if cid is not null and amount>0 then
+   insert into public.customer_debt_ledger(company_id,branch_id,customer_id,source_type,source_id,debit,credit,notes,created_by)
+   values(new.company_id,new.branch_id,cid,'sale',new.id,amount,paid,'Sales charge / payment',auth.uid()) on conflict do nothing;
+ end if;
+ return new;
+end; $$;
+
+drop trigger if exists sale_customer_debt_sync on public.sales;
+create trigger sale_customer_debt_sync after insert on public.sales for each row execute function public.sync_sale_customer_debt();
+
+create or replace function public.sync_repair_payment_debt()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare cid uuid; branch uuid; company uuid;
+begin
+ select r.customer_id,r.branch_id,r.company_id into cid,branch,company from public.repairs r where r.id=new.repair_id;
+ if cid is not null then
+   insert into public.customer_debt_ledger(company_id,branch_id,customer_id,source_type,source_id,credit,notes,created_by)
+   values(company,branch,cid,'payment',new.id,coalesce(new.amount,0),'Repair payment',auth.uid()) on conflict do nothing;
+ end if;
+ return new;
+end; $$;
+
+drop trigger if exists repair_payment_customer_debt_sync on public.repair_payments;
+create trigger repair_payment_customer_debt_sync after insert on public.repair_payments for each row execute function public.sync_repair_payment_debt();
+
+-- Audit important operational mutations without requiring every page to remember to log manually.
+create or replace function public.audit_operational_change()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare c uuid; b uuid; eid uuid;
+begin
+ c:=coalesce(new.company_id,old.company_id); b:=coalesce(new.branch_id,old.branch_id); eid:=coalesce(new.id,old.id);
+ insert into public.audit_logs(company_id,branch_id,actor_id,action,entity_type,entity_id,old_data,new_data)
+ values(c,b,auth.uid(),tg_op||' on '||tg_table_name,tg_table_name,eid,case when tg_op='INSERT' then null else to_jsonb(old) end,case when tg_op='DELETE' then null else to_jsonb(new) end);
+ return coalesce(new,old);
+end; $$;
+
+drop trigger if exists inventory_audit on public.inventory;
+create trigger inventory_audit after insert or update or delete on public.inventory for each row execute function public.audit_operational_change();
+drop trigger if exists repair_audit on public.repairs;
+create trigger repair_audit after insert or update or delete on public.repairs for each row execute function public.audit_operational_change();
+drop trigger if exists sale_audit on public.sales;
+create trigger sale_audit after insert or update or delete on public.sales for each row execute function public.audit_operational_change();
+drop trigger if exists invoice_audit on public.invoices;
+create trigger invoice_audit after insert or update or delete on public.invoices for each row execute function public.audit_operational_change();
+
+grant execute on function public.sync_repair_customer_debt() to authenticated;
+grant execute on function public.sync_sale_customer_debt() to authenticated;
+grant execute on function public.sync_repair_payment_debt() to authenticated;
