@@ -39,7 +39,7 @@ export default function QuickStats() {
   const stats = [
     { title: "Today's Repairs", value: todayTickets, icon: Wrench, color: "bg-teal-600", label: "Workshop intake" },
     { title: "Revenue Today", value: formattedRevenue, icon: Wallet, color: "bg-slate-900", label: "Sales + repairs" },
-    { title: "Waiting", value: waiting, icon: Clock3, color: "bg-sky-600", label: "Needs attention" },
+    { title: "Waiting", value: waiting, icon: Clock3, color: "bg-amber-500", label: "Needs attention" },
     { title: "Completed Today", value: completedToday, icon: CheckCircle2, color: "bg-emerald-600", label: "Ready / completed" },
   ];
 
