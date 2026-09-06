@@ -15,9 +15,11 @@ const PAGE_TITLES: Record<string, string> = {
   "/repairs": "Repairs",
   "/inventory": "Inventory",
   "/sales": "Sales",
+  "/finance": "Finance",
   "/reports": "Reports",
   "/settings": "Settings",
   "/technical-services": "Technical Services",
+  "/staff": "Staff & Branches",
 };
 
 function getPageTitle(pathname: string) {
@@ -29,7 +31,6 @@ function getPageTitle(pathname: string) {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-
   const [fullName, setFullName] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
 
@@ -37,22 +38,19 @@ export default function Header() {
     fetchProfile();
   }, []);
 
-async function fetchProfile() {
-  const session = await getCurrentSession();
+  async function fetchProfile() {
+    const session = await getCurrentSession();
+    if (!session?.user) return;
 
-  if (!session?.user) return;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("full_name, companies(name)")
-    .eq("id", session.user.id)
-    .maybeSingle();
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name, companies(name)")
+      .eq("id", session.user.id)
+      .maybeSingle();
 
     if (data) {
       setFullName(data.full_name);
-      const company = Array.isArray(data.companies)
-        ? data.companies[0]
-        : data.companies;
+      const company = Array.isArray(data.companies) ? data.companies[0] : data.companies;
       setCompanyName(company?.name ?? null);
     }
   }
@@ -65,65 +63,39 @@ async function fetchProfile() {
   const displayName = fullName || "User";
   const initial = displayName.charAt(0).toUpperCase();
 
-  return (
-    <header className="sticky top-0 z-40 flex h-20 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 shadow-sm md:px-8">
-      {/* Left */}
-      <div className="flex items-center gap-3 min-w-0">
-        <SidebarTrigger className="md:hidden" />
-        <Separator orientation="vertical" className="h-6 md:hidden" />
+  const iconButtonClass = "rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900";
 
+  return (
+    <header className="sticky top-0 z-40 flex h-20 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <SidebarTrigger className="rounded-xl text-slate-600 hover:bg-slate-100 md:hidden" />
+        <Separator orientation="vertical" className="h-6 md:hidden" />
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-bold text-slate-900 md:text-2xl">
-            {getPageTitle(pathname)}
-          </h1>
-          <p className="hidden truncate text-sm text-slate-500 sm:block">
-            {companyName ? `${companyName} 👋` : "Welcome back 👋"}
-          </p>
+          <h1 className="truncate font-heading text-lg font-bold tracking-tight text-slate-950 md:text-2xl">{getPageTitle(pathname)}</h1>
+          <p className="hidden truncate text-sm text-slate-500 sm:block">{companyName ? `${companyName} 👋` : "Welcome back 👋"}</p>
         </div>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-600 transition hover:bg-slate-100"
-          aria-label="Search"
-        >
+      <div className="flex items-center gap-2 md:gap-3">
+        <button type="button" className={iconButtonClass} aria-label="Search">
           <Search className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-600 transition hover:bg-slate-100"
-          aria-label="Notifications"
-        >
+        <button type="button" className={iconButtonClass} aria-label="Notifications">
           <Bell className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 font-semibold text-white">
-            {initial}
-          </div>
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 shadow-sm sm:px-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 font-heading font-semibold text-white">{initial}</div>
           <div className="hidden text-left sm:block">
             <p className="text-sm font-semibold text-slate-900">{displayName}</p>
             <p className="text-xs text-slate-500">{companyName || "Account"}</p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/settings")}
-          className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-600 transition hover:bg-slate-100"
-          aria-label="Settings"
-        >
+        <button type="button" onClick={() => router.push("/settings")} className={iconButtonClass} aria-label="Settings">
           <Settings className="h-4 w-4" />
         </button>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-600 transition hover:bg-slate-100"
-          aria-label="Logout"
-        >
+        <button type="button" onClick={handleLogout} className={iconButtonClass} aria-label="Logout">
           <LogOut className="h-4 w-4" />
         </button>
       </div>
