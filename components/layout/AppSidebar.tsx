@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Smartphone, Wrench, Package, ShoppingCart, BarChart3, Settings, Cpu, Building2, WalletCards, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Users, Smartphone, Wrench, Package, ShoppingCart, BarChart3, Settings, Cpu, Building2, WalletCards, ClipboardList, FileText, HandCoins, ShieldCheck } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
 import { staffService } from "@/services/staffService";
 import type { StaffRole } from "@/types/staff";
@@ -17,6 +17,8 @@ const navItems = [
   { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Sales", url: "/sales", icon: ShoppingCart },
   { title: "Finance", url: "/finance", icon: WalletCards },
+  { title: "Invoices", url: "/invoices", icon: FileText },
+  { title: "Outstanding", url: "/outstanding", icon: HandCoins },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Technical Services", url: "/technical-services", icon: Cpu },
 ];
@@ -53,7 +55,7 @@ export default function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton isActive={pathname === item.url || (item.url === "/tickets" && pathname.startsWith("/tickets/"))} tooltip={item.title} render={<Link href={item.url} />} className="h-10 rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:font-semibold data-[active=true]:text-teal-700 data-[active=true]:shadow-none">
+                  <SidebarMenuButton isActive={pathname === item.url || (item.url !== "/dashboard" && pathname.startsWith(`${item.url}/`))} tooltip={item.title} render={<Link href={item.url} />} className="h-10 rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:font-semibold data-[active=true]:text-teal-700 data-[active=true]:shadow-none">
                     <item.icon className="size-[18px]" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -65,7 +67,10 @@ export default function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {canManageStaff && <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/staff"} tooltip="Staff & Branches" render={<Link href="/staff" />} className="h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><Building2 className="size-[18px]" /><span>Staff & Branches</span></SidebarMenuButton></SidebarMenuItem>}
+          {canManageStaff && <>
+            <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/staff"} tooltip="Staff & Branches" render={<Link href="/staff" />} className="h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><Building2 className="size-[18px]" /><span>Staff & Branches</span></SidebarMenuButton></SidebarMenuItem>
+            <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/audit"} tooltip="Audit Log" render={<Link href="/audit" />} className="h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><ShieldCheck className="size-[18px]" /><span>Audit Log</span></SidebarMenuButton></SidebarMenuItem>
+          </>}
           <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/settings"} tooltip="Settings" render={<Link href="/settings" />} className="h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><Settings className="size-[18px]" /><span>Settings</span></SidebarMenuButton></SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
