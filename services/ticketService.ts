@@ -4,12 +4,12 @@ export const ticketService = {
   async getTicketById(id: string) {
     return await supabase
       .from("repair_tickets")
-      .select(
-        `
+      .select(`
         id,
         ticket_number,
         issued_at,
         repairs (
+          id,
           issue,
           diagnosis,
           solution,
@@ -19,23 +19,25 @@ export const ticketService = {
           final_cost,
           deposit,
           completed_at,
-          companies (
-            name
-          ),
+          companies (name),
           devices (
+            id,
             brand,
             model,
             device_type,
             serial_number,
-            customers (
-              full_name,
-              phone
-            )
+            customers (id, full_name, phone)
           )
         )
-      `
-      )
+      `)
       .eq("id", id)
       .single();
+  },
+
+  async markCollected(repairId: string) {
+    return await supabase
+      .from("repairs")
+      .update({ status: "Collected" })
+      .eq("id", repairId);
   },
 };
