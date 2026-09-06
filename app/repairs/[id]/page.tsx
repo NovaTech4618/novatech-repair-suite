@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, CheckCircle2, CircleDollarSign, ClipboardList, Package, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
 import RepairPartsPanel from "@/components/repairs/RepairPartsPanel";
@@ -14,113 +15,19 @@ import { repairPaymentService } from "@/services/repairPaymentService";
 import type { RepairPayment } from "@/types/repairPayment";
 import type { RepairProfit } from "@/types/repairParts";
 
-function money(value: number) {
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value);
+function money(value:number){return new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(value)}
+function paymentLabel(method:string){const m=method.toLowerCase();if(m==="cash")return"Cash";if(m==="transfer"||m==="bank transfer")return"Transfer";if(m==="pos"||m==="card")return"POS";return method||"Other"}
+function statusTone(status:string){return ["Completed","Collected"].includes(status)?"border-teal-200 bg-teal-50 text-teal-800":["Repairing","Testing"].includes(status)?"border-amber-200 bg-amber-50 text-amber-800":"border-slate-200 bg-slate-50 text-slate-700"}
+
+export default function RepairDetailPage(){
+ const params=useParams<{id:string}>();const[repair,setRepair]=useState<any>(null);const[profit,setProfit]=useState<RepairProfit|null>(null);const[payments,setPayments]=useState<RepairPayment[]>([]);const[loading,setLoading]=useState(true);
+ async function load(){setLoading(true);const[{data,error},{data:profitRows,error:profitError},{data:paymentRows,error:paymentError}]=await Promise.all([repairService.getRepairById(params.id),repairService.getRepairProfit(params.id),repairPaymentService.getPayments(params.id)]);setLoading(false);if(error){toast.error("Could not load this repair.");return}if(profitError)toast.error("Profit metrics could not be calculated.");if(paymentError)toast.error("Payment history could not be loaded.");setRepair(data);setProfit(profitRows?.[0]??null);setPayments(paymentRows??[])}
+ useEffect(()=>{if(params.id)void load()},[params.id]);
+ if(loading)return <AppLayout><main className="mx-auto max-w-[1500px] space-y-4 p-5 sm:p-6 lg:p-8"><div className="h-5 w-28 animate-pulse rounded bg-slate-100"/><div className="h-36 animate-pulse rounded-2xl bg-slate-100"/><div className="grid gap-3 sm:grid-cols-4">{[1,2,3,4].map(n=><div key={n} className="h-24 animate-pulse rounded-2xl bg-slate-100"/>)}</div></main></AppLayout>;
+ if(!repair)return <AppLayout><main className="mx-auto max-w-[1500px] p-5 sm:p-6 lg:p-8"><Card><CardContent className="flex min-h-64 flex-col items-center justify-center text-center"><Wrench className="size-8 text-slate-400"/><h1 className="mt-4 font-heading text-xl font-semibold">Repair not found</h1><p className="mt-1 text-sm text-slate-500">This repair may have been removed or the link is invalid.</p><Button asChild className="mt-5"><Link href="/repairs">Back to repairs</Link></Button></CardContent></Card></main></AppLayout>;
+ const device=repair.devices,customer=device?.customers,total=Number(profit?.revenue??repair.final_cost??repair.estimated_cost??0),paid=Number(profit?.amount_paid??repair.deposit??0),balance=Number(profit?.outstanding??Math.max(total-paid,0)),ticket=repair.repair_tickets?.[0],partsCost=Number(profit?.parts_cost??0),gross=Number(profit?.gross_profit??total-partsCost),margin=Number(profit?.margin_percent??(total?gross/total*100:0)),done=["Completed","Collected"].includes(repair.status);
+ return <AppLayout><main className="mx-auto w-full max-w-[1500px] space-y-6 p-5 sm:p-6 lg:p-8"><Link href="/repairs" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-teal-700"><ArrowLeft className="size-4"/>Back to repairs</Link><section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-teal-50/80 to-transparent"/><div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone(repair.status)}`}>{repair.status}</span>{ticket&&<Link href={`/tickets/${ticket.id}`} className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-teal-200 hover:text-teal-700">{ticket.ticket_number}</Link>}</div><h1 className="mt-3 truncate font-heading text-2xl font-bold tracking-tight text-slate-950 sm:text-4xl">{device?.brand} {device?.model}</h1><p className="mt-1 text-sm text-slate-500">{repair.issue||"Repair job"}</p></div><div className="relative flex flex-wrap gap-2"><Link href={`/devices/${repair.device_id}`}><Button variant="outline"><Wrench className="mr-2 size-4"/>Device</Button></Link>{ticket&&<Link href={`/tickets/${ticket.id}`}><Button variant="outline"><ClipboardList className="mr-2 size-4"/>Ticket</Button></Link>}</div></div></section><section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Kpi label="Repair value" value={money(total)}/><Kpi label="Paid" value={money(paid)}/><Kpi label="Outstanding" value={money(balance)}/><Kpi label="Gross profit" value={money(gross)} hint={`${margin.toFixed(1)}% margin`}/></section><div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.75fr)]"><div className="space-y-6"><Card className="border-slate-200 shadow-sm"><CardHeader><CardTitle className="font-heading text-lg">Repair workflow</CardTitle></CardHeader><CardContent className="space-y-5"><Step label="Customer issue" value={repair.issue} done/><Step label="Diagnosis" value={repair.diagnosis} done={Boolean(repair.diagnosis)}/><Step label="Solution / work performed" value={repair.solution} done={Boolean(repair.solution)}/><Step label="Final notes" value={repair.repair_notes} done={Boolean(repair.repair_notes)}/></CardContent></Card><Card className="border-slate-200 shadow-sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className="font-heading text-lg">Parts & job cost</CardTitle><Package className="size-5 text-teal-700"/></div></CardHeader><CardContent><RepairPartsPanel repairId={repair.id}/></CardContent></Card><Card className="border-slate-200 shadow-sm"><CardHeader><CardTitle className="font-heading text-lg">Payment history</CardTitle></CardHeader><CardContent>{payments.length===0?<div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-5 text-sm text-slate-500">No payment has been recorded for this repair yet.</div>:<div className="space-y-2">{payments.map(p=><div key={p.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-900">{money(Number(p.amount))}</p><p className="mt-1 text-xs text-slate-500">{new Date(p.payment_date).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}</p>{p.notes&&<p className="mt-1 text-xs text-slate-500">{p.notes}</p>}</div><Badge variant="secondary">{paymentLabel(p.payment_method)}</Badge></div>)}</div>}</CardContent></Card></div><aside className="space-y-6 xl:sticky xl:top-6 xl:self-start"><Card className="border-slate-200 shadow-sm"><CardHeader><CardTitle className="font-heading text-lg">Customer</CardTitle></CardHeader><CardContent><p className="font-semibold text-slate-900">{customer?.full_name||"Unknown customer"}</p><p className="mt-1 text-xs text-slate-500">Repair customer</p>{customer?.id&&<Link href={`/customers/${customer.id}`} className="mt-4 block text-sm font-semibold text-teal-700 hover:underline">Open customer profile →</Link>}</CardContent></Card><Card className="border-slate-200 shadow-sm"><CardHeader><CardTitle className="font-heading text-lg">Financial summary</CardTitle></CardHeader><CardContent className="space-y-3 text-sm"><Line label="Repair revenue" value={money(total)}/><Line label="Parts cost" value={money(partsCost)}/><Line label="Gross profit" value={money(gross)}/><div className="border-t border-slate-100 pt-3"><Line label="Amount paid" value={money(paid)} strong/><Line label="Balance" value={money(balance)} strong/></div></CardContent></Card><Card className="border-teal-100 bg-teal-50/50 shadow-sm"><CardContent className="p-5"><div className="flex items-start gap-3"><CheckCircle2 className={`mt-0.5 size-5 ${done?"text-teal-700":"text-slate-400"}`}/><div><p className="font-semibold text-slate-900">{done?"Repair completed":"Repair in progress"}</p><p className="mt-1 text-sm text-slate-600">{done?"This job is ready for the customer workflow.":"Keep diagnosis, work performed and parts updated as the job progresses."}</p></div></div></CardContent></Card></aside></div></main></AppLayout>;
 }
-
-function paymentLabel(method: string) {
-  const normalized = method.toLowerCase();
-  if (normalized === "cash") return "Cash";
-  if (normalized === "transfer" || normalized === "bank transfer") return "Transfer";
-  if (normalized === "pos" || normalized === "card") return "POS";
-  return method || "Other";
-}
-
-export default function RepairDetailPage() {
-  const params = useParams<{ id: string }>();
-  const [repair, setRepair] = useState<any>(null);
-  const [profit, setProfit] = useState<RepairProfit | null>(null);
-  const [payments, setPayments] = useState<RepairPayment[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function load() {
-    setLoading(true);
-    const [{ data, error }, { data: profitRows, error: profitError }, { data: paymentRows, error: paymentError }] = await Promise.all([
-      repairService.getRepairById(params.id),
-      repairService.getRepairProfit(params.id),
-      repairPaymentService.getPayments(params.id),
-    ]);
-    setLoading(false);
-    if (error) { toast.error("Could not load this repair."); return; }
-    if (profitError) toast.error("Repair loaded, but profit metrics could not be calculated.");
-    if (paymentError) toast.error("Payment history could not be loaded.");
-    setRepair(data);
-    setProfit(profitRows?.[0] ?? null);
-    setPayments(paymentRows ?? []);
-  }
-
-  useEffect(() => { if (params.id) void load(); }, [params.id]);
-
-  if (loading) return <AppLayout><div className="p-6 text-sm text-muted-foreground">Loading repair...</div></AppLayout>;
-  if (!repair) return <AppLayout><div className="p-6"><p>Repair not found.</p><Button asChild className="mt-4"><Link href="/repairs">Back to Repairs</Link></Button></div></AppLayout>;
-
-  const device = repair.devices;
-  const customer = device?.customers;
-  const total = Number(profit?.revenue ?? repair.final_cost ?? repair.estimated_cost ?? 0);
-  const paid = Number(profit?.amount_paid ?? repair.deposit ?? 0);
-  const balance = Number(profit?.outstanding ?? Math.max(total - paid, 0));
-  const ticket = repair.repair_tickets?.[0];
-  const partsCost = Number(profit?.parts_cost ?? 0);
-  const grossProfit = Number(profit?.gross_profit ?? total - partsCost);
-  const margin = Number(profit?.margin_percent ?? (total > 0 ? (grossProfit / total) * 100 : 0));
-
-  return (
-    <AppLayout>
-      <div className="mx-auto w-full max-w-5xl space-y-5 px-1 sm:space-y-6 sm:px-0">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Link href="/repairs" className="text-sm text-blue-600 hover:underline">← All Repairs</Link>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{device?.brand} {device?.model}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{customer?.full_name || "Unknown customer"} · {repair.issue}</p>
-          </div>
-          <Badge>{repair.status}</Badge>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Repair Revenue</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(total)}</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Parts Cost</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(partsCost)}</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Gross Profit</CardTitle></CardHeader><CardContent className={`text-xl font-bold ${grossProfit < 0 ? "text-red-600" : "text-emerald-600"}`}>{money(grossProfit)}</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Margin</CardTitle></CardHeader><CardContent className={`text-xl font-bold ${grossProfit < 0 ? "text-red-600" : "text-emerald-600"}`}>{margin.toFixed(1)}%</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Paid</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(paid)}</CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Outstanding</CardTitle></CardHeader><CardContent className="text-xl font-bold">{money(balance)}</CardContent></Card>
-        </div>
-
-        <Card>
-          <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
-          <CardContent>
-            {payments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No payment has been recorded for this repair yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {payments.map((payment) => (
-                  <div key={payment.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold">{money(Number(payment.amount))}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(payment.payment_date).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}</p>
-                      {payment.notes && <p className="mt-1 text-xs text-muted-foreground">{payment.notes}</p>}
-                    </div>
-                    <Badge variant="secondary">{paymentLabel(payment.payment_method)}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Repair Details</CardTitle></CardHeader>
-          <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-            <div><p className="text-xs text-muted-foreground">Issue</p><p className="mt-1 font-medium">{repair.issue || "—"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Technician</p><p className="mt-1 font-medium">{repair.technician || "Not assigned"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Diagnosis</p><p className="mt-1">{repair.diagnosis || "—"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Solution</p><p className="mt-1">{repair.solution || "—"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Ticket</p><p className="mt-1">{ticket ? <Link href={`/tickets/${ticket.id}`} className="font-semibold text-blue-600 hover:underline">{ticket.ticket_number}</Link> : "—"}</p></div>
-            <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">Repair Notes</p><p className="mt-1 whitespace-pre-wrap">{repair.repair_notes || "—"}</p></div>
-          </CardContent>
-        </Card>
-
-        <RepairPartsPanel repairId={repair.id} />
-      </div>
-    </AppLayout>
-  );
-}
+function Kpi({label,value,hint}:{label:string;value:string;hint?:string}){return <Card className="border-slate-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center gap-2"><CircleDollarSign className="size-4 text-teal-700"/><p className="text-xs font-medium text-slate-500">{label}</p></div><p className="mt-3 font-heading text-xl font-bold text-slate-900">{value}</p>{hint&&<p className="mt-1 text-xs text-slate-400">{hint}</p>}</CardContent></Card>}
+function Line({label,value,strong}:{label:string;value:string;strong?:boolean}){return <div className="flex items-center justify-between gap-4"><span className="text-slate-500">{label}</span><span className={strong?"font-bold text-slate-950":"font-semibold text-slate-800"}>{value}</span></div>}
+function Step({label,value,done}:{label:string;value?:string|null;done:boolean}){return <div className="flex gap-3"><div className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full ${done?"bg-teal-50 text-teal-700":"bg-slate-100 text-slate-400"}`}>{done?<CheckCircle2 className="size-4"/>:<span className="size-2 rounded-full bg-slate-300"/>}</div><div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">{value||"Not recorded yet."}</p></div></div>}
