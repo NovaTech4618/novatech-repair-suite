@@ -12,6 +12,17 @@ export type BusinessReport = {
   low_stock_items: number;
 };
 
+export type RepairReportRow = {
+  id: string;
+  status: string | null;
+  final_cost: number | null;
+  created_at: string;
+  received_at: string | null;
+  completed_at: string | null;
+  expected_completion_date: string | null;
+  technician: string | null;
+};
+
 export const reportsService = {
   async getBusinessReport(from?: string, to?: string) {
     const { data, error } = await supabase.rpc("get_business_report", {
@@ -31,11 +42,18 @@ export const reportsService = {
     return await query;
   },
 
-  async getRepairsForReports() {
-    return await supabase
+  async getRepairsForReports(from?: string, to?: string) {
+    let query = supabase
       .from("repairs")
-      .select("id, status, final_cost, created_at, completed_at")
+      .select("id, status, final_cost, created_at, received_at, completed_at, expected_completion_date, technician")
       .order("created_at", { ascending: false });
+    if (from) query = query.gte("received_at", from);
+    if (to) query = query.lte("received_at", to);
+    const result = await query;
+    return {
+      data: (result.data ?? []) as RepairReportRow[],
+      error: result.error,
+    };
   },
 
   async getLowStockItems() {
