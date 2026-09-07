@@ -2,8 +2,6 @@ import { supabase } from "@/lib/supabase";
 import type { StaffInvitationInput, StaffMember, StaffRole } from "@/types/staff";
 
 export const staffService = {
-  // Current user's own role — drives UI gating (e.g. hiding Staff & Branches
-  // from anyone who isn't an owner or branch manager).
   async getMyRole(): Promise<{ data: StaffRole | null; error: Error | null }> {
     const { data, error } = await supabase.rpc("get_my_role");
     if (error) return { data: null, error };
@@ -13,12 +11,7 @@ export const staffService = {
   async getStaff() {
     const { data, error } = await supabase
       .from("profiles")
-      .select(
-        `
-          id, full_name, role, is_active, created_at,
-          user_branches ( branches ( id, name ) )
-        `
-      )
+      .select(`id, full_name, role, is_active, created_at, user_branches ( branches ( id, name ) )`)
       .order("created_at", { ascending: true });
 
     if (error) return { data: null, error };
@@ -45,18 +38,18 @@ export const staffService = {
     return { data: staff, error: null };
   },
 
-  // Role/company/active changes are locked at the database level (a
-  // trigger blocks anyone but the owner) — this will fail loudly for
-  // non-owners rather than silently succeeding.
   async updateStaffRole(profileId: string, role: StaffRole) {
-    return await supabase.from("profiles").update({ role }).eq("id", profileId);
+    return await supabase.rpc("update_staff_role", {
+      p_profile_id: profileId,
+      p_role: role,
+    });
   },
 
   async setStaffActive(profileId: string, isActive: boolean) {
-    return await supabase
-      .from("profiles")
-      .update({ is_active: isActive })
-      .eq("id", profileId);
+    return await supabase.rpc("set_staff_active", {
+      p_profile_id: profileId,
+      p_is_active: isActive,
+    });
   },
 
   async getInvitations() {
