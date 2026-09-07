@@ -41,27 +41,20 @@ export default function RepairInvoicePage() {
 
   async function createInvoice() {
     if (!repair) return;
-    const subtotal = Number(amount);
+    const amountValue = Number(amount);
     const discountValue = Number(discount || 0);
-    if (!Number.isFinite(subtotal) || subtotal < 0) return toast.error("Enter a valid repair amount.");
-    if (!Number.isFinite(discountValue) || discountValue < 0 || discountValue > subtotal) return toast.error("Enter a valid discount.");
+    if (!Number.isFinite(amountValue) || amountValue < 0) return toast.error("Enter a valid repair amount.");
+    if (!Number.isFinite(discountValue) || discountValue < 0 || discountValue > amountValue) return toast.error("Enter a valid discount.");
     if (!description.trim()) return toast.error("Add an invoice description.");
 
     setSaving(true);
     const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-    const total = subtotal - discountValue;
-    const customerId = repair.devices?.customers?.id ?? null;
-
-    const { data, error } = await businessOperationsService.createInvoiceWithItem({
-      invoiceNumber,
-      customerId,
+    const { data, error } = await businessOperationsService.createRepairInvoice({
       repairId: repair.id,
-      subtotal,
-      discount: discountValue,
-      total,
+      invoiceNumber,
       description: description.trim(),
-      quantity: 1,
-      unitPrice: subtotal,
+      amount: amountValue,
+      discount: discountValue,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
