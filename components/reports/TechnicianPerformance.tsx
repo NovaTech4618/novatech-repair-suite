@@ -54,7 +54,6 @@ export default function TechnicianPerformance() {
   }, [rows]);
 
   const totals = useMemo(() => ({
-    assigned: rows.reduce((sum, row) => sum + numberValue(row, ["assigned_repairs", "assigned_jobs", "total_repairs", "repairs_assigned"]), 0),
     completed: rows.reduce((sum, row) => sum + numberValue(row, ["completed_repairs", "completed_jobs", "repairs_completed"]), 0),
     revenue: rows.reduce((sum, row) => sum + numberValue(row, ["repair_revenue", "revenue", "completed_value"]), 0),
   }), [rows]);
@@ -87,34 +86,17 @@ export default function TechnicianPerformance() {
           <div className="rounded-xl bg-slate-50 p-8 text-center text-sm text-slate-500">No engineer performance data is available yet.</div>
         ) : (
           <table className="w-full min-w-[720px] text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <th className="px-3 py-3">Rank</th><th className="px-3 py-3">Engineer</th><th className="px-3 py-3 text-right">Assigned</th><th className="px-3 py-3 text-right">Completed</th><th className="px-3 py-3 text-right">Completion</th><th className="px-3 py-3 text-right">Repair value</th><th className="px-3 py-3 text-right">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ranked.map((row, index) => {
-                const assigned = numberValue(row, ["assigned_repairs", "assigned_jobs", "total_repairs", "repairs_assigned"]);
-                const completed = numberValue(row, ["completed_repairs", "completed_jobs", "repairs_completed"]);
-                const rawRate = numberValue(row, ["completion_rate", "completion_percentage"]);
-                const rate = rawRate > 1 ? rawRate : rawRate * 100;
-                const revenue = numberValue(row, ["repair_revenue", "revenue", "completed_value"]);
-                const balance = numberValue(row, ["engineer_balance", "outstanding_balance", "balance"]);
-                const name = textValue(row, ["engineer_name", "name", "full_name"]);
-                const delta = index === 0 ? "top" : index === ranked.length - 1 ? "bottom" : "mid";
-                return (
-                  <tr key={`${name}-${index}`} className="border-b border-slate-100 last:border-0">
-                    <td className="px-3 py-3"><span className="inline-flex items-center gap-1 font-semibold text-slate-700">{index + 1}{index === 0 && <Trophy className="size-3.5 text-amber-500" />}</span></td>
-                    <td className="px-3 py-3 font-semibold text-slate-900">{name}</td>
-                    <td className="px-3 py-3 text-right text-slate-600">{assigned}</td>
-                    <td className="px-3 py-3 text-right font-semibold text-slate-900">{completed}</td>
-                    <td className="px-3 py-3 text-right"><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${rate >= 80 ? "bg-emerald-50 text-emerald-700" : rate >= 50 ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{rate.toFixed(0)}%</span></td>
-                    <td className="px-3 py-3 text-right text-slate-700">{money(revenue)}</td>
-                    <td className="px-3 py-3 text-right font-semibold text-slate-700">{money(balance)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
+            <thead><tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400"><th className="px-3 py-3">Rank</th><th className="px-3 py-3">Engineer</th><th className="px-3 py-3 text-right">Assigned</th><th className="px-3 py-3 text-right">Completed</th><th className="px-3 py-3 text-right">Completion</th><th className="px-3 py-3 text-right">Repair value</th><th className="px-3 py-3 text-right">Balance</th></tr></thead>
+            <tbody>{ranked.map((row, index) => {
+              const assigned = numberValue(row, ["assigned_repairs", "assigned_jobs", "total_repairs", "repairs_assigned"]);
+              const completed = numberValue(row, ["completed_repairs", "completed_jobs", "repairs_completed"]);
+              const rawRate = numberValue(row, ["completion_rate", "completion_percentage"]);
+              const rate = rawRate > 1 ? rawRate : rawRate * 100;
+              const revenue = numberValue(row, ["repair_revenue", "revenue", "completed_value"]);
+              const balance = numberValue(row, ["engineer_balance", "outstanding_balance", "balance"]);
+              const name = textValue(row, ["engineer_name", "name", "full_name"]);
+              return <tr key={`${name}-${index}`} className="border-b border-slate-100 last:border-0"><td className="px-3 py-3"><span className="inline-flex items-center gap-1 font-semibold text-slate-700">{index + 1}{index === 0 && <Trophy className="size-3.5 text-amber-500" />}</span></td><td className="px-3 py-3 font-semibold text-slate-900">{name}</td><td className="px-3 py-3 text-right text-slate-600">{assigned}</td><td className="px-3 py-3 text-right font-semibold text-slate-900">{completed}</td><td className="px-3 py-3 text-right"><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${rate >= 80 ? "bg-emerald-50 text-emerald-700" : rate >= 50 ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{rate.toFixed(0)}%</span></td><td className="px-3 py-3 text-right text-slate-700">{money(revenue)}</td><td className="px-3 py-3 text-right font-semibold text-slate-700">{money(balance)}</td></tr>;
+            })}</tbody>
           </table>
         )}
       </div>
