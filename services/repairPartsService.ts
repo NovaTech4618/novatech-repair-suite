@@ -23,6 +23,13 @@ export const repairPartsService = {
       };
   },
 
+  async getLedger() {
+    return await supabase
+      .from("repair_parts_usage")
+      .select("id, repair_id, engineer_id, inventory_id, quantity_used, quantity_returned, unit_cost, notes, created_at, engineers(name), inventory(item_name, brand, cost_price), repairs(id, issue, status)")
+      .order("created_at", { ascending: false });
+  },
+
   async getProfit(repairId: string) {
     return await supabase.rpc("get_repair_profit", { p_repair_id: repairId }) as {
       data: RepairProfit[] | null;
