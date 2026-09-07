@@ -1,0 +1,1 @@
+REVOKE SELECT ON TABLE public.engineer_performance_summary, public.inventory_report_summary, public.repair_balance_view, public.repair_invoice_view, public.repair_report_summary, public.sale_receipt_view, public.sales_report_summary FROM anon;
