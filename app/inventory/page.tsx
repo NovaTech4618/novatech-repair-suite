@@ -6,6 +6,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import InventoryForm from "@/components/inventory/InventoryForm";
 import InventoryTable from "@/components/inventory/InventoryTable";
 import ReceiveStockPanel from "@/components/inventory/ReceiveStockPanel";
+import TransferStockPanel from "@/components/inventory/TransferStockPanel";
 import { inventoryService } from "@/services/inventoryService";
 import type { InventoryItem } from "@/types/inventory";
 
@@ -35,8 +36,8 @@ export default function InventoryPage() {
   return <AppLayout>
     <div className="space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Workshop stockroom</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Inventory</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">Find parts, receive stock, control shortages and keep the repair bench supplied.</p></div>
-        <Link href="/inventory/movements" className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-teal-200 hover:bg-teal-50">Stock movements</Link>
+        <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Workshop stockroom</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Inventory</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">Find parts, receive stock, transfer between branches and keep the repair bench supplied.</p></div>
+        <Link href="/inventory/movements" className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-teal-200 hover:bg-teal-50">Stock movements & transfers</Link>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -46,7 +47,7 @@ export default function InventoryPage() {
 
       {lowStock.length > 0 && <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4"><div className="flex items-start justify-between gap-4"><div><h2 className="font-semibold text-amber-950">Parts need attention</h2><p className="mt-1 text-sm text-amber-800">These items are at or below their minimum stock level.</p></div><span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">{lowStock.length}</span></div><div className="mt-3 flex flex-wrap gap-2">{lowStock.slice(0, 8).map((item) => <span key={item.id} className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">{item.item_name} · {item.quantity} left</span>)}</div></section>}
 
-      <section className="grid gap-6 xl:grid-cols-2"><InventoryForm editingItem={editingItem} onSaved={() => { setEditingItem(null); saveRefresh(); }} onCancelEdit={() => setEditingItem(null)} /><ReceiveStockPanel refreshKey={refreshKey} onReceived={saveRefresh} /></section>
+      <section className="grid gap-6 xl:grid-cols-3"><InventoryForm editingItem={editingItem} onSaved={() => { setEditingItem(null); saveRefresh(); }} onCancelEdit={() => setEditingItem(null)} /><ReceiveStockPanel refreshKey={refreshKey} onReceived={saveRefresh} /><TransferStockPanel items={items} onTransferred={saveRefresh} /></section>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 px-5 py-4"><h2 className="font-semibold text-slate-950">Parts on hand</h2><p className="mt-1 text-sm text-slate-500">Stock available for repairs and sales.</p></div><InventoryTable refreshKey={refreshKey} onEdit={setEditingItem} itemsOverride={filtered} embedded /></section>
     </div>
