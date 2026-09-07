@@ -3,18 +3,10 @@ import { supabase } from "@/lib/supabase";
 export const businessOperationsService = {
   async getCustomerBalances() { return await supabase.rpc("get_customer_balances"); },
   async getInvoices() { return await supabase.from("invoices").select("*, customers(full_name,phone)").order("issued_at", { ascending: false }); },
-  async createInvoice(input: { invoiceNumber: string; customerId: string | null; repairId?: string | null; saleId?: string | null; subtotal: number; discount?: number; total: number; dueAt?: string | null; notes?: string | null }) {
-    return await supabase.rpc("create_invoice", { p_invoice_number: input.invoiceNumber, p_customer_id: input.customerId ?? null, p_repair_id: input.repairId ?? null, p_sale_id: input.saleId ?? null, p_subtotal: input.subtotal, p_discount: input.discount ?? 0, p_total: input.total, p_due_at: input.dueAt ?? null, p_notes: input.notes ?? null });
-  },
-  async addInvoiceItem(input: { invoiceId: string; description: string; quantity: number; unitPrice: number }) {
-    return await supabase.rpc("add_invoice_item", { p_invoice_id: input.invoiceId, p_description: input.description, p_quantity: input.quantity, p_unit_price: input.unitPrice });
-  },
+  async createInvoice(input: { invoiceNumber: string; customerId: string | null; repairId?: string | null; saleId?: string | null; subtotal: number; discount?: number; total: number; dueAt?: string | null; notes?: string | null }) { return await supabase.rpc("create_invoice", { p_invoice_number: input.invoiceNumber, p_customer_id: input.customerId ?? null, p_repair_id: input.repairId ?? null, p_sale_id: input.saleId ?? null, p_subtotal: input.subtotal, p_discount: input.discount ?? 0, p_total: input.total, p_due_at: input.dueAt ?? null, p_notes: input.notes ?? null }); },
+  async addInvoiceItem(input: { invoiceId: string; description: string; quantity: number; unitPrice: number }) { return await supabase.rpc("add_invoice_item", { p_invoice_id: input.invoiceId, p_description: input.description, p_quantity: input.quantity, p_unit_price: input.unitPrice }); },
   async recordCustomerDebt(input: { customerId: string; invoiceId?: string | null; sourceType: "invoice" | "repair" | "sale" | "payment" | "adjustment"; sourceId?: string | null; debit?: number; credit?: number; branchId?: string | null; notes?: string | null }) {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return { data: null, error: new Error("Not authenticated") };
-    const { data: profile, error } = await supabase.from("profiles").select("company_id").eq("id", user.user.id).single();
-    if (error || !profile?.company_id) return { data: null, error: error ?? new Error("Company not found") };
-    return await supabase.from("customer_debt_ledger").insert({ company_id: profile.company_id, customer_id: input.customerId, invoice_id: input.invoiceId ?? null, source_type: input.sourceType, source_id: input.sourceId ?? null, debit: input.debit ?? 0, credit: input.credit ?? 0, branch_id: input.branchId ?? null, notes: input.notes ?? null, created_by: user.user.id });
+    return await supabase.rpc("record_customer_debt", { p_customer_id: input.customerId, p_invoice_id: input.invoiceId ?? null, p_source_type: input.sourceType, p_source_id: input.sourceId ?? null, p_debit: input.debit ?? 0, p_credit: input.credit ?? 0, p_branch_id: input.branchId ?? null, p_notes: input.notes ?? null });
   },
   async getAuditLogs() { return await supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(200); },
   async writeAudit(action: string, entityType: string, entityId?: string | null, oldData?: unknown, newData?: unknown, metadata?: unknown) { return await supabase.rpc("write_audit_log", { p_action: action, p_entity_type: entityType, p_entity_id: entityId ?? null, p_old: oldData ?? null, p_new: newData ?? null, p_metadata: metadata ?? null }); },
