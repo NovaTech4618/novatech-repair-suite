@@ -5,7 +5,6 @@ import { Bot, LockKeyhole, Send, Sparkles, Zap } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { getCurrentSession } from "@/lib/supabase";
 import { askPremiumAssistant } from "./actions";
 
@@ -25,6 +24,7 @@ export default function AssistantPage() {
   const [busy, setBusy] = useState(false);
   const [premium, setPremium] = useState<boolean | null>(null);
   const [token, setToken] = useState("");
+  const [conversationId, setConversationId] = useState<string | undefined>();
 
   useEffect(() => {
     getCurrentSession().then((session) => {
@@ -43,10 +43,17 @@ export default function AssistantPage() {
     setInput("");
     setMessages((m) => [...m, { role: "user", text }]);
     setBusy(true);
-    const result = await askPremiumAssistant(token, text);
-    setBusy(false);
-    setPremium(result.premium);
-    setMessages((m) => [...m, { role: "assistant", text: result.text }]);
+
+    try {
+      const result = await askPremiumAssistant(token, text, conversationId);
+      setPremium(result.premium);
+      if (result.conversationId) setConversationId(result.conversationId);
+      setMessages((m) => [...m, { role: "assistant", text: result.text }]);
+    } catch {
+      setMessages((m) => [...m, { role: "assistant", text: "The assistant could not complete that request. Please try again." }]);
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (premium === false && !token) {
