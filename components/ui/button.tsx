@@ -7,6 +7,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "glass" | "outline" | "destructive" | "ghost";
   size?: "sm" | "md" | "lg" | "icon-sm" | "icon-md" | "icon-lg";
   nativeButton?: boolean;
+  asChild?: boolean;
   render?: React.ReactElement<{ className?: string; children?: React.ReactNode }>;
 }
 
@@ -29,7 +30,7 @@ const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", children, nativeButton = true, render, ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", children, nativeButton = true, asChild = false, render, ...props }, ref) => {
     const classes = cn(
       "inline-flex items-center justify-center gap-2 rounded-lg font-manrope font-semibold tracking-tight transition-all duration-150 cursor-pointer disabled:pointer-events-none disabled:opacity-50",
       variantClasses[variant],
@@ -38,6 +39,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     const content = <span className="flex items-center justify-center gap-2">{children}</span>;
+
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        className: cn(classes, (children.props as { className?: string }).className),
+        children: content,
+      } as Partial<React.HTMLAttributes<HTMLElement>>);
+    }
 
     if (!nativeButton && render) {
       return React.cloneElement(render, {
