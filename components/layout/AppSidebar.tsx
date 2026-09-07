@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeftRight, BarChart3, Bot, Building2, ClipboardList, FileText, HandCoins, LayoutDashboard, Package, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench } from "lucide-react";
+import { ArrowLeftRight, BarChart3, Bot, Building2, ClipboardList, FileText, HandCoins, LayoutDashboard, Package, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench, ClipboardCheck } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { staffService } from "@/services/staffService";
 import type { StaffRole } from "@/types/staff";
@@ -19,6 +19,7 @@ const groups = [
   { label: "Workshop", items: [
     { title: "Inventory", url: "/inventory", icon: Package },
     { title: "Engineer workflow", url: "/engineer-workflow", icon: UserCog },
+    { title: "Parts ledger", url: "/technician-ledger", icon: ClipboardCheck },
   ] },
   { label: "Billing", items: [
     { title: "Invoices", url: "/invoices", icon: FileText },
