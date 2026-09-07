@@ -8,120 +8,19 @@ import { supabase } from "@/lib/supabase";
 
 type Engineer = { id: string; name: string; status: string };
 type Balance = { engineer_id: string; total_debit: number; total_credit: number; balance: number };
-type LedgerRow = {
-  id: string; repair_id: string; engineer_id: string; inventory_id: string;
-  quantity_used: number; quantity_returned: number; unit_cost: number; notes: string | null; created_at: string;
-  engineers?: { name: string } | null;
-  inventory?: { item_name: string; brand: string | null; cost_price: number | null } | null;
-  repairs?: { id: string; issue: string | null; status: string | null } | null;
-};
+type LedgerRow = { id: string; repair_id: string; engineer_id: string; inventory_id: string; quantity_used: number; quantity_returned: number; unit_cost: number; notes: string | null; created_at: string; engineers?: { name: string } | null; inventory?: { item_name: string; brand: string | null; cost_price: number | null } | null; repairs?: { id: string; issue: string | null; status: string | null } | null };
 type InventoryItem = { id: string; item_name: string; brand: string | null; quantity: number; cost_price: number | null };
 type Repair = { id: string; issue: string | null; status: string | null; engineer_id: string | null; engineers?: { name: string } | null };
-
 const money = (n: number) => `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
 export default function TechnicianLedgerPage() {
-  const [engineers, setEngineers] = useState<Engineer[]>([]);
-  const [balances, setBalances] = useState<Balance[]>([]);
-  const [ledger, setLedger] = useState<LedgerRow[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [repairs, setRepairs] = useState<Repair[]>([]);
-  const [engineerFilter, setEngineerFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("open");
-  const [query, setQuery] = useState("");
-  const [repairId, setRepairId] = useState("");
-  const [inventoryId, setInventoryId] = useState("");
-  const [quantity, setQuantity] = useState("1");
-  const [notes, setNotes] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-
-  async function load() {
-    const [people, balancesResult, ledgerResult, inventoryResult, repairsResult] = await Promise.all([
-      engineerService.getEngineers(),
-      engineerService.getBalances(),
-      repairPartsService.getLedger(),
-      supabase.from("inventory").select("id,item_name,brand,quantity,cost_price").order("item_name"),
-      supabase.from("repairs").select("id,issue,status,engineer_id,engineers(name)").order("created_at", { ascending: false }).limit(200),
-    ]);
-    if (people.data) setEngineers(people.data as Engineer[]);
-    if (balancesResult.data) setBalances(balancesResult.data as Balance[]);
-    if (ledgerResult.data) setLedger(ledgerResult.data as LedgerRow[]);
-    if (inventoryResult.data) setInventory(inventoryResult.data as InventoryItem[]);
-    if (repairsResult.data) setRepairs(repairsResult.data as Repair[]);
-    const firstError = people.error || balancesResult.error || ledgerResult.error || inventoryResult.error || repairsResult.error;
-    if (firstError) setMessage(firstError.message);
-  }
-
+  const [engineers, setEngineers] = useState<Engineer[]>([]); const [balances, setBalances] = useState<Balance[]>([]); const [ledger, setLedger] = useState<LedgerRow[]>([]); const [inventory, setInventory] = useState<InventoryItem[]>([]); const [repairs, setRepairs] = useState<Repair[]>([]); const [engineerFilter, setEngineerFilter] = useState(""); const [statusFilter, setStatusFilter] = useState("open"); const [query, setQuery] = useState(""); const [repairId, setRepairId] = useState(""); const [inventoryId, setInventoryId] = useState(""); const [quantity, setQuantity] = useState("1"); const [notes, setNotes] = useState(""); const [busy, setBusy] = useState(false); const [message, setMessage] = useState("");
+  async function load() { const [people, balancesResult, ledgerResult, inventoryResult, repairsResult] = await Promise.all([engineerService.getEngineers(), engineerService.getBalances(), repairPartsService.getLedger(), supabase.from("inventory").select("id,item_name,brand,quantity,cost_price").order("item_name"), supabase.from("repairs").select("id,issue,status,engineer_id,engineers(name)").order("created_at", { ascending: false }).limit(200)]); if (people.data) setEngineers(people.data as Engineer[]); if (balancesResult.data) setBalances(balancesResult.data as Balance[]); if (ledgerResult.data) setLedger(ledgerResult.data as unknown as LedgerRow[]); if (inventoryResult.data) setInventory(inventoryResult.data as InventoryItem[]); if (repairsResult.data) setRepairs(repairsResult.data as unknown as Repair[]); const firstError = people.error || balancesResult.error || ledgerResult.error || inventoryResult.error || repairsResult.error; if (firstError) setMessage(firstError.message); }
   useEffect(() => { void load(); }, []);
-
-  const balanceMap = useMemo(() => new Map(balances.map((b) => [b.engineer_id, b])), [balances]);
-  const outstandingUnits = ledger.reduce((sum, row) => sum + Math.max(Number(row.quantity_used) - Number(row.quantity_returned), 0), 0);
-  const outstandingValue = ledger.reduce((sum, row) => sum + Math.max(Number(row.quantity_used) - Number(row.quantity_returned), 0) * Number(row.unit_cost), 0);
-
-  const visible = useMemo(() => ledger.filter((row) => {
-    const open = Number(row.quantity_used) - Number(row.quantity_returned);
-    const matchesStatus = statusFilter === "all" || (statusFilter === "open" ? open > 0 : open === 0);
-    const matchesEngineer = !engineerFilter || row.engineer_id === engineerFilter;
-    const haystack = `${row.engineers?.name ?? ""} ${row.inventory?.item_name ?? ""} ${row.inventory?.brand ?? ""} ${row.repair_id} ${row.repairs?.issue ?? ""}`.toLowerCase();
-    return matchesStatus && matchesEngineer && haystack.includes(query.toLowerCase());
-  }), [ledger, engineerFilter, statusFilter, query]);
-
-  const selectedRepair = repairs.find((r) => r.id === repairId);
-  const availableParts = inventory.filter((i) => i.quantity > 0);
-
-  async function issuePart() {
-    const qty = Number(quantity);
-    if (!repairId || !inventoryId || !Number.isInteger(qty) || qty <= 0) { setMessage("Select a repair, part and valid quantity."); return; }
-    if (!selectedRepair?.engineer_id) { setMessage("Assign an engineer to the repair before issuing a part."); return; }
-    setBusy(true); setMessage("");
-    const result = await repairPartsService.recordUsage(repairId, inventoryId, qty, notes);
-    if (result.error) setMessage(result.error.message);
-    else { setMessage("Part issued and added to the engineer ledger."); setRepairId(""); setInventoryId(""); setQuantity("1"); setNotes(""); await load(); }
-    setBusy(false);
-  }
-
-  async function returnPart(row: LedgerRow) {
-    const open = Number(row.quantity_used) - Number(row.quantity_returned);
-    if (open <= 0) return;
-    const raw = window.prompt(`Return quantity (max ${open})`, String(open));
-    if (raw === null) return;
-    const qty = Number(raw);
-    if (!Number.isInteger(qty) || qty <= 0 || qty > open) { setMessage("Invalid return quantity."); return; }
-    setBusy(true); setMessage("");
-    const result = await repairPartsService.returnUsage(row.id, qty, "Returned unused part from technician");
-    if (result.error) setMessage(result.error.message); else { setMessage("Return recorded and stock restored."); await load(); }
-    setBusy(false);
-  }
-
-  return <AppLayout><div className="space-y-6">
-    <header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Workshop accountability</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Technician Parts Ledger</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">Track every part handed to an engineer, the repair it belongs to, what remains with them and what has been returned.</p></div>
-      <div className="text-sm text-slate-500"><strong className="text-slate-950">{outstandingUnits}</strong> units still outstanding · <strong className="text-slate-950">{money(outstandingValue)}</strong> at cost</div>
-    </header>
-
-    {message && <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">{message}</div>}
-
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-1"><h2 className="font-semibold text-slate-950">Issue a part to a repair</h2><p className="text-sm text-slate-500">The repair must already have an active engineer. Stock, engineer debit and repair usage are updated together.</p></div>
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1.3fr_1.2fr_120px_1fr_auto] lg:items-end">
-        <label className="text-sm font-medium text-slate-700">Repair<select value={repairId} onChange={(e) => setRepairId(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Select repair</option>{repairs.filter((r) => r.engineer_id && !["completed","collected"].includes(String(r.status).toLowerCase())).map((r) => <option key={r.id} value={r.id}>{r.id.slice(0, 8)} · {r.engineers?.name ?? "Engineer"} · {(r.issue ?? "Repair").slice(0, 28)}</option>)}</select></label>
-        <label className="text-sm font-medium text-slate-700">Part<select value={inventoryId} onChange={(e) => setInventoryId(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Select part</option>{availableParts.map((item) => <option key={item.id} value={item.id}>{item.item_name}{item.brand ? ` · ${item.brand}` : ""} · {item.quantity} in stock</option>)}</select></label>
-        <label className="text-sm font-medium text-slate-700">Qty<input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
-        <label className="text-sm font-medium text-slate-700">Note<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
-        <button disabled={busy} onClick={issuePart} className="h-10 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50">{busy ? "Working..." : "Issue part"}</button>
-      </div>
-    </section>
-
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {engineers.slice(0, 4).map((engineer) => { const b = balanceMap.get(engineer.id); return <button key={engineer.id} onClick={() => setEngineerFilter(engineerFilter === engineer.id ? "" : engineer.id)} className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-teal-300 ${engineerFilter === engineer.id ? "border-teal-500 ring-1 ring-teal-500/20" : "border-slate-200"}`}><div className="flex items-center justify-between"><span className="font-semibold text-slate-950">{engineer.name}</span><span className="text-xs text-slate-400">{engineer.status}</span></div><div className="mt-3 flex items-end justify-between"><div><p className="text-xs text-slate-500">Current debit</p><p className="mt-1 text-lg font-bold text-slate-950">{money(Number(b?.balance ?? 0))}</p></div><span className="text-xs text-teal-700">{engineerFilter === engineer.id ? "Filtered" : "View ledger"}</span></div></button>; })}
-    </section>
-
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between"><div><h2 className="font-semibold text-slate-950">Parts custody ledger</h2><p className="mt-1 text-sm text-slate-500">Issued quantity minus returned quantity is the amount still accountable to the engineer.</p></div><div className="flex flex-col gap-2 sm:flex-row"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search engineer, part or repair..." className="h-9 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-teal-500" /><select value={engineerFilter} onChange={(e) => setEngineerFilter(e.target.value)} className="h-9 rounded-lg border border-slate-200 px-3 text-sm"><option value="">All engineers</option>{engineers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded-lg border border-slate-200 px-3 text-sm"><option value="open">Outstanding</option><option value="all">All</option><option value="returned">Returned</option></select></div></div>
-      <div className="overflow-x-auto"><table className="w-full min-w-[950px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Engineer</th><th className="px-5 py-3">Part</th><th className="px-5 py-3">Repair</th><th className="px-5 py-3">Issued</th><th className="px-5 py-3">Returned</th><th className="px-5 py-3">Outstanding</th><th className="px-5 py-3">Cost</th><th className="px-5 py-3 text-right">Action</th></tr></thead><tbody>{visible.map((row) => { const outstanding = Math.max(Number(row.quantity_used) - Number(row.quantity_returned), 0); return <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50/70"><td className="px-5 py-4 font-semibold text-slate-900">{row.engineers?.name ?? "—"}</td><td className="px-5 py-4"><div className="font-medium text-slate-900">{row.inventory?.item_name ?? "Unknown part"}</div><div className="text-xs text-slate-400">{row.inventory?.brand ?? ""}</div></td><td className="px-5 py-4"><div className="font-medium text-slate-700">{row.repair_id.slice(0, 8)}</div><div className="max-w-[220px] truncate text-xs text-slate-400">{row.repairs?.issue ?? "Repair"}</div></td><td className="px-5 py-4">{row.quantity_used}</td><td className="px-5 py-4">{row.quantity_returned}</td><td className={`px-5 py-4 font-bold ${outstanding ? "text-amber-700" : "text-emerald-700"}`}>{outstanding}</td><td className="px-5 py-4">{money(Number(row.unit_cost) * outstanding)}</td><td className="px-5 py-4 text-right">{outstanding > 0 ? <button disabled={busy} onClick={() => void returnPart(row)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Record return</button> : <span className="text-xs font-medium text-emerald-600">Settled</span>}</td></tr>; })}</tbody></table>{visible.length === 0 && <div className="py-14 text-center text-sm text-slate-500">No parts match the current filters.</div>}</div>
-    </section>
-
-    <p className="text-xs text-slate-400">Parts issued through this workflow reduce inventory immediately. Unused returns restore stock and credit the engineer ledger; consumed parts remain attached to the repair for costing and billing.</p>
-  </div></AppLayout>;
+  const balanceMap = useMemo(() => new Map(balances.map((b) => [b.engineer_id, b])), [balances]); const outstandingUnits = ledger.reduce((sum, row) => sum + Math.max(Number(row.quantity_used) - Number(row.quantity_returned), 0), 0); const outstandingValue = ledger.reduce((sum, row) => sum + Math.max(Number(row.quantity_used) - Number(row.quantity_returned), 0) * Number(row.unit_cost), 0);
+  const visible = useMemo(() => ledger.filter((row) => { const open = Number(row.quantity_used) - Number(row.quantity_returned); const matchesStatus = statusFilter === "all" || (statusFilter === "open" ? open > 0 : open === 0); const matchesEngineer = !engineerFilter || row.engineer_id === engineerFilter; const haystack = `${row.engineers?.name ?? ""} ${row.inventory?.item_name ?? ""} ${row.inventory?.brand ?? ""} ${row.repair_id} ${row.repairs?.issue ?? ""}`.toLowerCase(); return matchesStatus && matchesEngineer && haystack.includes(query.toLowerCase()); }), [ledger, engineerFilter, statusFilter, query]);
+  const selectedRepair = repairs.find((r) => r.id === repairId); const availableParts = inventory.filter((i) => i.quantity > 0);
+  async function issuePart() { const qty = Number(quantity); if (!repairId || !inventoryId || !Number.isInteger(qty) || qty <= 0) { setMessage("Select a repair, part and valid quantity."); return; } if (!selectedRepair?.engineer_id) { setMessage("Assign an engineer to the repair before issuing a part."); return; } setBusy(true); setMessage(""); const result = await repairPartsService.recordUsage(repairId, inventoryId, qty, notes); if (result.error) setMessage(result.error.message); else { setMessage("Part issued and added to the engineer ledger."); setRepairId(""); setInventoryId(""); setQuantity("1"); setNotes(""); await load(); } setBusy(false); }
+  async function returnPart(row: LedgerRow) { const open = Number(row.quantity_used) - Number(row.quantity_returned); if (open <= 0) return; const raw = window.prompt(`Return quantity (max ${open})`, String(open)); if (raw === null) return; const qty = Number(raw); if (!Number.isInteger(qty) || qty <= 0 || qty > open) { setMessage("Invalid return quantity."); return; } setBusy(true); setMessage(""); const result = await repairPartsService.returnUsage(row.id, qty, "Returned unused part from technician"); if (result.error) setMessage(result.error.message); else { setMessage("Return recorded and stock restored."); await load(); } setBusy(false); }
+  return <AppLayout><div className="space-y-6"><header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Workshop accountability</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Technician Parts Ledger</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">Track every part handed to an engineer, the repair it belongs to, what remains with them and what has been returned.</p></div><div className="text-sm text-slate-500"><strong className="text-slate-950">{outstandingUnits}</strong> units still outstanding · <strong className="text-slate-950">{money(outstandingValue)}</strong> at cost</div></header>{message && <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">{message}</div>}<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div><h2 className="font-semibold text-slate-950">Issue a part to a repair</h2><p className="text-sm text-slate-500">The repair must already have an active engineer. Stock, engineer debit and repair usage are updated together.</p></div><div className="mt-5 grid gap-4 lg:grid-cols-[1.3fr_1.2fr_120px_1fr_auto] lg:items-end"><label className="text-sm font-medium text-slate-700">Repair<select value={repairId} onChange={(e) => setRepairId(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Select repair</option>{repairs.filter((r) => r.engineer_id && !["completed","collected"].includes(String(r.status).toLowerCase())).map((r) => <option key={r.id} value={r.id}>{r.id.slice(0, 8)} · {r.engineers?.name ?? "Engineer"} · {(r.issue ?? "Repair").slice(0, 28)}</option>)}</select></label><label className="text-sm font-medium text-slate-700">Part<select value={inventoryId} onChange={(e) => setInventoryId(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Select part</option>{availableParts.map((item) => <option key={item.id} value={item.id}>{item.item_name}{item.brand ? ` · ${item.brand}` : ""} · {item.quantity} in stock</option>)}</select></label><label className="text-sm font-medium text-slate-700">Qty<input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label><label className="text-sm font-medium text-slate-700">Note<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label><button disabled={busy} onClick={issuePart} className="h-10 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50">{busy ? "Working..." : "Issue part"}</button></div></section><section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{engineers.slice(0, 4).map((engineer) => { const b = balanceMap.get(engineer.id); return <button key={engineer.id} onClick={() => setEngineerFilter(engineerFilter === engineer.id ? "" : engineer.id)} className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-teal-300 ${engineerFilter === engineer.id ? "border-teal-500 ring-1 ring-teal-500/20" : "border-slate-200"}`}><div className="flex items-center justify-between"><span className="font-semibold text-slate-950">{engineer.name}</span><span className="text-xs text-slate-400">{engineer.status}</span></div><div className="mt-3 flex items-end justify-between"><div><p className="text-xs text-slate-500">Current debit</p><p className="mt-1 text-lg font-bold text-slate-950">{money(Number(b?.balance ?? 0))}</p></div><span className="text-xs text-teal-700">{engineerFilter === engineer.id ? "Filtered" : "View ledger"}</span></div></button>; })}</section><section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between"><div><h2 className="font-semibold text-slate-950">Parts custody ledger</h2><p className="mt-1 text-sm text-slate-500">Issued quantity minus returned quantity is the amount still accountable to the engineer.</p></div><div className="flex flex-col gap-2 sm:flex-row"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search engineer, part or repair..." className="h-9 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-teal-500" /><select value={engineerFilter} onChange={(e) => setEngineerFilter(e.target.value)} className="h-9 rounded-lg border border-slate-200 px-3 text-sm"><option value="">All engineers</option>{engineers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded-lg border border-slate-200 px-3 text-sm"><option value="open">Outstanding</option><option value="all">All</option><option value="returned">Returned</option></select></div></div><div className="overflow-x-auto"><table className="w-full min-w-[950px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Engineer</th><th className="px-5 py-3">Part</th><th className="px-5 py-3">Repair</th><th className="px-5 py-3">Issued</th><th className="px-5 py-3">Returned</th><th className="px-5 py-3">Outstanding</th><th className="px-5 py-3">Cost</th><th className="px-5 py-3 text-right">Action</th></tr></thead><tbody>{visible.map((row) => { const outstanding = Math.max(Number(row.quantity_used) - Number(row.quantity_returned), 0); return <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50/70"><td className="px-5 py-4 font-semibold text-slate-900">{row.engineers?.name ?? "—"}</td><td className="px-5 py-4"><div className="font-medium text-slate-900">{row.inventory?.item_name ?? "Unknown part"}</div><div className="text-xs text-slate-400">{row.inventory?.brand ?? ""}</div></td><td className="px-5 py-4"><div className="font-medium text-slate-700">{row.repair_id.slice(0, 8)}</div><div className="max-w-[220px] truncate text-xs text-slate-400">{row.repairs?.issue ?? "Repair"}</div></td><td className="px-5 py-4">{row.quantity_used}</td><td className="px-5 py-4">{row.quantity_returned}</td><td className={`px-5 py-4 font-bold ${outstanding ? "text-amber-700" : "text-emerald-700"}`}>{outstanding}</td><td className="px-5 py-4">{money(Number(row.unit_cost) * outstanding)}</td><td className="px-5 py-4 text-right">{outstanding > 0 ? <button disabled={busy} onClick={() => void returnPart(row)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Record return</button> : <span className="text-xs font-medium text-emerald-600">Settled</span>}</td></tr>; })}</tbody></table>{visible.length === 0 && <div className="py-14 text-center text-sm text-slate-500">No parts match the current filters.</div>}</div></section><p className="text-xs text-slate-400">Parts issued through this workflow reduce inventory immediately. Unused returns restore stock and credit the engineer ledger; consumed parts remain attached to the repair for costing and billing.</p></div></AppLayout>;
 }
