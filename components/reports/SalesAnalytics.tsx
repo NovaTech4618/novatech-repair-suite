@@ -5,21 +5,24 @@ import { RefreshCw, ShoppingCart, TrendingUp } from "lucide-react";
 import { reportsService } from "@/services/reportsService";
 
 const money = (value: number) => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value);
+type Props = { from: string; to: string };
 
-export default function SalesAnalytics() {
-  const [rows, setRows] = useState<any[]>([]);
+type Sale = { id: string; total: number | null; sale_items?: Array<{ quantity: number | null; unit_price: number | null; total_price: number | null; inventory?: { item_name?: string | null; cost_price?: number | null } | null }> };
+
+export default function SalesAnalytics({ from, to }: Props) {
+  const [rows, setRows] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   async function load() {
     setLoading(true); setError("");
-    const result = await reportsService.getSalesWithItems();
+    const result = await reportsService.getSalesWithItems(from, to);
     if (result.error) setError(result.error.message);
-    else setRows((result.data ?? []) as any[]);
+    else setRows((result.data ?? []) as Sale[]);
     setLoading(false);
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [from, to]);
 
   const stats = useMemo(() => {
     let revenue = 0, units = 0, cost = 0;
@@ -27,7 +30,7 @@ export default function SalesAnalytics() {
     for (const sale of rows) {
       revenue += Number(sale.total || 0);
       for (const item of sale.sale_items ?? []) {
-        const qty = Number(item.quantity || 0), line = Number(item.total_price || qty * Number(item.unit_price || 0));
+        const qty = Number(item.quantity || 0), line = Number(item.total_price ?? qty * Number(item.unit_price || 0));
         units += qty; cost += qty * Number(item.inventory?.cost_price || 0);
         const name = item.inventory?.item_name || "Unnamed item";
         const current = products.get(name) ?? { units: 0, revenue: 0 };
@@ -39,8 +42,8 @@ export default function SalesAnalytics() {
 
   return <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Sales analytics</p><h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">Sales performance</h2><p className="mt-1 text-sm text-slate-500">Understand sales volume, product demand and estimated product margin.</p></div>
-      <button onClick={() => void load()} disabled={loading} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"><RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh</button>
+      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Sales analytics</p><h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">Sales performance</h2><p className="mt-1 text-sm text-slate-500">Understand sales volume, product demand and estimated product margin for the selected reporting period.</p></div>
+      <button type="button" onClick={() => void load()} disabled={loading} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"><RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh</button>
     </div>
     {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">Unable to load sales analytics: {error}</div>}
     <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Card label="Sales" value={String(rows.length)} /><Card label="Revenue" value={money(stats.revenue)} /><Card label="Units sold" value={String(stats.units)} /><Card label="Product margin" value={money(stats.profit)} /></div>
