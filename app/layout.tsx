@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Manrope, Space_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -24,8 +24,24 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Novatech Repair Suite",
-  description: "Phone Repair Shop Management System",
+  title: {
+    default: "NOVATECH Repair Suite",
+    template: "%s · NOVATECH",
+  },
+  description:
+    "Repair-shop management for customers, repairs, inventory, sales and finances.",
+  applicationName: "NOVATECH Repair Suite",
+  category: "business",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f766e",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
