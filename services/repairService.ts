@@ -1,5 +1,13 @@
 import { supabase } from "@/lib/supabase";
 
+export type RepairFinancialSummary = {
+  repair_id: string;
+  total_cost: number;
+  total_paid: number;
+  outstanding: number;
+  payment_status: string;
+};
+
 export const repairService = {
   async getRepairs(deviceId: string) {
     return await supabase
@@ -18,11 +26,34 @@ export const repairService = {
   },
 
   async getRepairProfit(id: string) {
-    const { data, error } = await supabase.rpc("get_repair_profit", {
-      p_repair_id: id,
-    });
+    const { data, error } = await supabase.rpc("get_repair_profit", { p_repair_id: id });
     if (error) return { data: null, error };
     return { data: Array.isArray(data) ? data[0] ?? null : data, error: null };
+  },
+
+  async getFinancialSummary(id: string) {
+    const { data, error } = await supabase.rpc("get_repair_financial_summary", { p_repair_id: id });
+    if (error) return { data: null, error };
+    return { data: (Array.isArray(data) ? data[0] ?? null : data) as RepairFinancialSummary | null, error: null };
+  },
+
+  async getPayments(id: string) {
+    return await supabase
+      .from("repair_payments")
+      .select("*")
+      .eq("repair_id", id)
+      .order("payment_date", { ascending: false });
+  },
+
+  async recordPayment(id: string, amount: number, paymentMethod: string, notes?: string) {
+    const { data, error } = await supabase.rpc("record_repair_payment", {
+      p_repair_id: id,
+      p_amount: amount,
+      p_payment_method: paymentMethod,
+      p_payment_date: new Date().toISOString(),
+      p_notes: notes || null,
+    });
+    return { data: Array.isArray(data) ? data[0] ?? null : data, error };
   },
 
   async getAllRepairs() {
