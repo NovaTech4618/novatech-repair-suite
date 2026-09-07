@@ -8,7 +8,25 @@ export const businessOperationsService = {
   async recordInvoicePayment(input: { invoiceId: string; amount: number; paymentMethod: "cash" | "transfer" | "pos" | "other"; notes?: string | null }) {
     return await supabase.rpc("record_invoice_payment", { p_invoice_id: input.invoiceId, p_amount: input.amount, p_payment_method: input.paymentMethod, p_notes: input.notes ?? null });
   },
-  async createInvoice(input: { invoiceNumber: string; customerId: string | null; repairId?: string | null; saleId?: string | null; subtotal: number; discount?: number; total: number; dueAt?: string | null; notes?: string | null }) { return await supabase.rpc("create_invoice", { p_invoice_number: input.invoiceNumber, p_customer_id: input.customerId ?? null, p_repair_id: input.repairId ?? null, p_sale_id: input.saleId ?? null, p_subtotal: input.subtotal, p_discount: input.discount ?? 0, p_total: input.total, p_due_at: input.dueAt ?? null, p_notes: input.notes ?? null }); },
+  async createInvoice(input: { invoiceNumber: string; customerId: string | null; repairId?: string | null; saleId?: string | null; subtotal: number; discount?: number; total: number; dueAt?: string | null; notes?: string | null }) {
+    return await supabase.rpc("create_invoice", { p_invoice_number: input.invoiceNumber, p_customer_id: input.customerId ?? null, p_repair_id: input.repairId ?? null, p_sale_id: input.saleId ?? null, p_subtotal: input.subtotal, p_discount: input.discount ?? 0, p_total: input.total, p_due_at: input.dueAt ?? null, p_notes: input.notes ?? null });
+  },
+  async createInvoiceWithItem(input: { invoiceNumber: string; customerId: string | null; repairId?: string | null; saleId?: string | null; subtotal: number; discount?: number; total: number; dueAt?: string | null; notes?: string | null; description: string; quantity?: number; unitPrice: number }) {
+    return await supabase.rpc("create_invoice_with_item", {
+      p_invoice_number: input.invoiceNumber,
+      p_customer_id: input.customerId ?? null,
+      p_repair_id: input.repairId ?? null,
+      p_sale_id: input.saleId ?? null,
+      p_subtotal: input.subtotal,
+      p_discount: input.discount ?? 0,
+      p_total: input.total,
+      p_due_at: input.dueAt ?? null,
+      p_notes: input.notes ?? null,
+      p_description: input.description,
+      p_quantity: input.quantity ?? 1,
+      p_unit_price: input.unitPrice,
+    });
+  },
   async addInvoiceItem(input: { invoiceId: string; description: string; quantity: number; unitPrice: number }) { return await supabase.rpc("add_invoice_item", { p_invoice_id: input.invoiceId, p_description: input.description, p_quantity: input.quantity, p_unit_price: input.unitPrice }); },
   async recordCustomerDebt(input: { customerId: string; invoiceId?: string | null; sourceType: "invoice" | "repair" | "sale" | "payment" | "adjustment"; sourceId?: string | null; debit?: number; credit?: number; branchId?: string | null; notes?: string | null }) {
     return await supabase.rpc("record_customer_debt", { p_customer_id: input.customerId, p_invoice_id: input.invoiceId ?? null, p_source_type: input.sourceType, p_source_id: input.sourceId ?? null, p_debit: input.debit ?? 0, p_credit: input.credit ?? 0, p_branch_id: input.branchId ?? null, p_notes: input.notes ?? null });
