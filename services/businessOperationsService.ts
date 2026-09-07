@@ -2,7 +2,12 @@ import { supabase } from "@/lib/supabase";
 
 export const businessOperationsService = {
   async getCustomerBalances() { return await supabase.rpc("get_customer_balances"); },
-  async getInvoices() { return await supabase.from("invoices").select("*, customers(full_name,phone)").order("issued_at", { ascending: false }); },
+  async getInvoices() { return await supabase.from("invoice_balance_view").select("*").order("issued_at", { ascending: false }); },
+  async getInvoice(invoiceId: string) { return await supabase.from("invoice_balance_view").select("*").eq("id", invoiceId).single(); },
+  async getInvoicePayments(invoiceId: string) { return await supabase.from("invoice_payments").select("*").eq("invoice_id", invoiceId).order("payment_date", { ascending: false }); },
+  async recordInvoicePayment(input: { invoiceId: string; amount: number; paymentMethod: "cash" | "transfer" | "pos" | "other"; notes?: string | null }) {
+    return await supabase.rpc("record_invoice_payment", { p_invoice_id: input.invoiceId, p_amount: input.amount, p_payment_method: input.paymentMethod, p_notes: input.notes ?? null });
+  },
   async createInvoice(input: { invoiceNumber: string; customerId: string | null; repairId?: string | null; saleId?: string | null; subtotal: number; discount?: number; total: number; dueAt?: string | null; notes?: string | null }) { return await supabase.rpc("create_invoice", { p_invoice_number: input.invoiceNumber, p_customer_id: input.customerId ?? null, p_repair_id: input.repairId ?? null, p_sale_id: input.saleId ?? null, p_subtotal: input.subtotal, p_discount: input.discount ?? 0, p_total: input.total, p_due_at: input.dueAt ?? null, p_notes: input.notes ?? null }); },
   async addInvoiceItem(input: { invoiceId: string; description: string; quantity: number; unitPrice: number }) { return await supabase.rpc("add_invoice_item", { p_invoice_id: input.invoiceId, p_description: input.description, p_quantity: input.quantity, p_unit_price: input.unitPrice }); },
   async recordCustomerDebt(input: { customerId: string; invoiceId?: string | null; sourceType: "invoice" | "repair" | "sale" | "payment" | "adjustment"; sourceId?: string | null; debit?: number; credit?: number; branchId?: string | null; notes?: string | null }) {
