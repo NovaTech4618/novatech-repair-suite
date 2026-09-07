@@ -5,6 +5,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import TechnicianPerformance from "@/components/reports/TechnicianPerformance";
 import SalesAnalytics from "@/components/reports/SalesAnalytics";
 import RepairTurnaroundAnalytics from "@/components/reports/RepairTurnaroundAnalytics";
+import CustomerAnalytics from "@/components/reports/CustomerAnalytics";
 import { reportsService, type BusinessReport } from "@/services/reportsService";
 import { financeService } from "@/services/financeService";
 import type { DailyProfit, ProfitSummary } from "@/types/finance";
@@ -27,6 +28,7 @@ export default function ReportsPage(){const [period,setPeriod]=useState<Period>(
  <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric title="Repairs received" value={String(report?.repairs_received??0)}/><Metric title="Repairs completed" value={String(report?.repairs_completed??0)}/><Metric title="Low-stock items" value={String(report?.low_stock_items??0)}/><Metric title="Inventory COGS" value={money(report?.inventory_cogs??0)}/></section>
  <SalesAnalytics from={from} to={to} />
  <RepairTurnaroundAnalytics from={from} to={to} />
+ <CustomerAnalytics from={from} to={to} />
  <TechnicianPerformance />
  <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="font-semibold text-slate-950">Management notes</h2><div className="mt-4 grid gap-4 text-sm text-slate-600 md:grid-cols-3"><Info title="Revenue vs cash" text="Revenue measures recorded business activity; cash received measures money actually collected. The difference is important when customers owe balances."/><Info title="Profit" text="Profit uses the finance reporting layer and tracked parts, engineer and operating costs. Manual expenses should be recorded in Finance."/><Info title="Stock" text="Low-stock counts and inventory costs help decide what needs replenishment before it affects repair turnaround."/></div></section></>}
  </div></AppLayout>}
