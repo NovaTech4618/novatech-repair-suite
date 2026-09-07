@@ -3,6 +3,7 @@ export type RepairPartUsage = {
   company_id: string;
   repair_id: string;
   inventory_id: string;
+  engineer_id: string | null;
   quantity_used: number;
   quantity_returned: number;
   unit_cost: number;
