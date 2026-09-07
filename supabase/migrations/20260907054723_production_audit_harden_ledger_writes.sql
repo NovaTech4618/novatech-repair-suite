@@ -1,0 +1,18 @@
+DROP POLICY IF EXISTS "Authenticated users manage company engineers" ON public.engineers;
+CREATE POLICY "Authorized users manage company engineers" ON public.engineers FOR ALL TO authenticated USING (company_id = public.get_my_company_id() AND public.has_permission('engineers.manage')) WITH CHECK (company_id = public.get_my_company_id() AND public.has_permission('engineers.manage'));
+DROP POLICY IF EXISTS "Authenticated users manage company engineer parts in" ON public.engineer_parts_in;
+CREATE POLICY "Engineer parts in read" ON public.engineer_parts_in FOR SELECT TO authenticated USING (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Authenticated users manage company engineer parts out" ON public.engineer_parts_out;
+CREATE POLICY "Engineer parts out read" ON public.engineer_parts_out FOR SELECT TO authenticated USING (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Authenticated users manage company engineer payments" ON public.engineer_payments;
+CREATE POLICY "Engineer payments read" ON public.engineer_payments FOR SELECT TO authenticated USING (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Authenticated users manage company engineer transactions" ON public.engineer_transactions;
+CREATE POLICY "Engineer transactions read" ON public.engineer_transactions FOR SELECT TO authenticated USING (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Authenticated users manage company parts credits" ON public.parts_credits;
+CREATE POLICY "Parts credits read" ON public.parts_credits FOR SELECT TO authenticated USING (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Authenticated users manage company credit payments" ON public.credit_payments;
+CREATE POLICY "Credit payments read" ON public.credit_payments FOR SELECT TO authenticated USING (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "inventory_stock_movements_no_direct_insert" ON public.inventory_stock_movements;
+CREATE POLICY "inventory_stock_movements_no_direct_insert" ON public.inventory_stock_movements FOR INSERT TO authenticated WITH CHECK (false);
+CREATE POLICY "inventory_stock_movements_no_update" ON public.inventory_stock_movements FOR UPDATE TO authenticated USING (false) WITH CHECK (false);
+CREATE POLICY "inventory_stock_movements_no_delete" ON public.inventory_stock_movements FOR DELETE TO authenticated USING (false);
