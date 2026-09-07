@@ -16,7 +16,7 @@ export const customerRequestService = {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("company_id, branch_id")
+      .select("company_id")
       .eq("id", userId)
       .single();
     if (profileError || !profile?.company_id) {
@@ -25,7 +25,7 @@ export const customerRequestService = {
 
     return await supabase.from("customer_requests").insert({
       company_id: profile.company_id,
-      branch_id: profile.branch_id ?? null,
+      branch_id: null,
       customer_id: input.customer_id ?? null,
       requested_item: input.requested_item.trim(),
       details: input.details?.trim() || null,
