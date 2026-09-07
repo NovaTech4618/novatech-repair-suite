@@ -24,6 +24,7 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://novatech-repair-suite-piiy.vercel.app"),
   title: {
     default: "NOVATECH Repair Suite",
     template: "%s · NOVATECH",
