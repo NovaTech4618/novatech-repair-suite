@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { businessOperationsService } from "@/services/businessOperationsService";
-import { supabase } from "@/lib/supabase";
 
 const money = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -32,35 +31,35 @@ export default function PaymentReceiptPage() {
     async function load() {
       if (!id || !paymentId) return;
       setLoading(true);
+      setError("");
+
       const invoiceResult = await businessOperationsService.getInvoice(id);
-      const paymentResult = await supabase
-        .from("invoice_payments")
-        .select("id,amount,payment_method,payment_date,notes")
-        .eq("id", paymentId)
-        .eq("invoice_id", id)
-        .single();
+      const paymentsResult = await businessOperationsService.getInvoicePayments(id);
+      const foundPayment = (paymentsResult.data ?? []).find((row: any) => row.id === paymentId) as Payment | undefined;
 
       let customerResult: Customer | null = null;
       if (invoiceResult.data?.customer_id) {
+        const { supabase } = await import("@/lib/supabase");
         const result = await supabase
           .from("customers")
           .select("full_name,phone")
           .eq("id", invoiceResult.data.customer_id)
           .single();
         customerResult = (result.data as Customer | null) ?? null;
+        if (result.error && !foundPayment) setError(result.error.message);
       }
 
       setInvoice(invoiceResult.data);
-      setPayment(paymentResult.data as Payment | null);
+      setPayment(foundPayment ?? null);
       setCustomer(customerResult);
-      setError(invoiceResult.error?.message ?? paymentResult.error?.message ?? "");
+      setError(invoiceResult.error?.message ?? paymentsResult.error?.message ?? (!foundPayment ? "Payment receipt not found." : ""));
       setLoading(false);
     }
     void load();
   }, [id, paymentId]);
 
   if (loading) return <AppLayout><div className="p-8 text-sm text-slate-500">Loading receipt…</div></AppLayout>;
-  if (!invoice || !payment) return <AppLayout><div className="p-8 text-sm text-red-600">Receipt not found. {error}</div></AppLayout>;
+  if (!invoice || !payment) return <AppLayout><div className="mx-auto max-w-2xl p-8"><div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">Receipt not found. {error}</div></div></AppLayout>;
 
   return (
     <AppLayout>
