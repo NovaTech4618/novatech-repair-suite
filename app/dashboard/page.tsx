@@ -3,6 +3,7 @@ import { ArrowRight, Plus, Wrench } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import QuickStats from "@/components/dashboard/QuickStats";
+import ManagementInsights from "@/components/dashboard/ManagementInsights";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import LowStock from "@/components/dashboard/LowStock";
 import QuickActions from "@/components/dashboard/QuickActions";
@@ -17,16 +18,14 @@ export default function DashboardPage() {
             <h1 className="mt-1 font-heading text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Good to see you.</h1>
             <p className="mt-1 text-sm text-slate-500">Everything important for today, without the clutter.</p>
           </div>
-          <Link
-            href="/repairs"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
+          <Link href="/repairs" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
             <Plus className="size-4" />
             New repair
           </Link>
         </header>
 
         <QuickStats />
+        <ManagementInsights />
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.75fr)]">
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
