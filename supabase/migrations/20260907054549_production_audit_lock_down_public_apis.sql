@@ -1,0 +1,22 @@
+-- Lock down legacy/public-role policies and direct ledger writes.
+DROP POLICY IF EXISTS "Users can manage company credit payments" ON public.credit_payments;
+CREATE POLICY "Authenticated users manage company credit payments" ON public.credit_payments FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Users can manage company engineer parts in" ON public.engineer_parts_in;
+CREATE POLICY "Authenticated users manage company engineer parts in" ON public.engineer_parts_in FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Users can manage company engineer parts out" ON public.engineer_parts_out;
+CREATE POLICY "Authenticated users manage company engineer parts out" ON public.engineer_parts_out FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Users can manage company engineer payments" ON public.engineer_payments;
+CREATE POLICY "Authenticated users manage company engineer payments" ON public.engineer_payments FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Users can manage company engineer transactions" ON public.engineer_transactions;
+CREATE POLICY "Authenticated users manage company engineer transactions" ON public.engineer_transactions FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Users can manage company engineers" ON public.engineers;
+CREATE POLICY "Authenticated users manage company engineers" ON public.engineers FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Users can manage company parts credits" ON public.parts_credits;
+CREATE POLICY "Authenticated users manage company parts credits" ON public.parts_credits FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Company isolation - demand_log" ON public.demand_log;
+CREATE POLICY "Authenticated company demand_log" ON public.demand_log FOR ALL TO authenticated USING (company_id = public.get_my_company_id()) WITH CHECK (company_id = public.get_my_company_id());
+DROP POLICY IF EXISTS "Owners manage invitations" ON public.staff_invitations;
+CREATE POLICY "Owners manage invitations" ON public.staff_invitations FOR ALL TO authenticated USING (company_id = public.get_my_company_id() AND public.is_company_owner()) WITH CHECK (company_id = public.get_my_company_id() AND public.is_company_owner());
+DROP POLICY IF EXISTS "inventory_stock_movements_insert_company" ON public.inventory_stock_movements;
+CREATE POLICY "inventory_stock_movements_no_direct_insert" ON public.inventory_stock_movements FOR INSERT TO authenticated WITH CHECK (false);
+REVOKE EXECUTE ON FUNCTION public.update_parts_credit_status() FROM anon;
