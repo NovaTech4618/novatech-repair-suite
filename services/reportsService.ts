@@ -21,11 +21,14 @@ export const reportsService = {
     return { data: (data?.[0] ?? null) as BusinessReport | null, error };
   },
 
-  async getSalesWithItems() {
-    return await supabase
+  async getSalesWithItems(from?: string, to?: string) {
+    let query = supabase
       .from("sales")
       .select("id, sale_date, total, discount, sale_items(quantity, unit_price, total_price, inventory(item_name, cost_price))")
       .order("sale_date", { ascending: false });
+    if (from) query = query.gte("sale_date", from);
+    if (to) query = query.lte("sale_date", to);
+    return await query;
   },
 
   async getRepairsForReports() {
