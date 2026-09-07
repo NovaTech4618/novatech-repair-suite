@@ -32,6 +32,9 @@ export const metadata: Metadata = {
     "Repair-shop management for customers, repairs, inventory, sales and finances.",
   applicationName: "NOVATECH Repair Suite",
   category: "business",
+  verification: {
+    google: "R-XIxwDQvgCpCjwnRcuj9kkfDgnP1TZ4NtDuBDNAQy8",
+  },
   robots: {
     index: false,
     follow: false,
