@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/supabase";
-import { askPremiumAssistant } from "./actions";
+import { askPremiumAssistant, getPremiumConversation } from "./actions";
 
 type Message = { role: "user" | "assistant"; text: string };
 
@@ -36,16 +36,34 @@ export default function AssistantPage() {
   const [conversationId, setConversationId] = useState<string | undefined>();
 
   useEffect(() => {
-    const savedConversationId = window.localStorage.getItem(CONVERSATION_STORAGE_KEY);
-    if (savedConversationId) setConversationId(savedConversationId);
+    let active = true;
+    const savedConversationId = window.localStorage.getItem(CONVERSATION_STORAGE_KEY) || undefined;
 
-    getCurrentSession().then((session) => {
+    getCurrentSession().then(async (session) => {
+      if (!active) return;
       if (!session) {
         setPremium(false);
         return;
       }
+
       setToken(session.access_token);
+
+      if (savedConversationId) {
+        const history = await getPremiumConversation(session.access_token, savedConversationId);
+        if (!active) return;
+
+        if (history.ok && history.messages.length > 0) {
+          setConversationId(savedConversationId);
+          setMessages(history.messages.map((message) => ({ role: message.role, text: message.content })));
+        } else {
+          window.localStorage.removeItem(CONVERSATION_STORAGE_KEY);
+        }
+      }
     });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
