@@ -1,5 +1,7 @@
 export type InventoryItem = {
   id: string;
+  company_id?: string;
+  branch_id: string | null;
   item_name: string;
   category: string | null;
   brand: string | null;
