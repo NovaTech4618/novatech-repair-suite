@@ -9,18 +9,33 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-displ
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-body", weight: ["400", "500", "600", "700"] });
 const spaceMono = Space_Mono({ subsets: ["latin"], variable: "--font-data", weight: ["400", "700"] });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://novatech-repair-suite-piiy.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://novatech-repair-suite-jf8kucdqd-nova-tech-repair-suite.vercel.app"),
+  metadataBase: new URL(siteUrl),
   title: { default: "NOVATECH Repair Suite", template: "%s · NOVATECH" },
   description: "Repair-shop management for customers, devices, repairs, inventory, sales, payments and business finances.",
   applicationName: "NOVATECH Repair Suite",
   category: "business",
   verification: { google: "R-XIxwDQvgCpCjwnRcuj9kkfDgnP1TZ4NtDuBDNAQy8" },
-  robots: { index: false, follow: false },
+  robots: { index: true, follow: true },
 };
 
-export const viewport: Viewport = { themeColor: "#0f766e", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  themeColor: "#0f766e",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className={`${spaceGrotesk.variable} ${manrope.variable} ${spaceMono.variable}`}><body><TooltipProvider>{children}<Toaster richColors position="top-right" /></TooltipProvider></body></html>;
+  return (
+    <html lang="en" className={`${spaceGrotesk.variable} ${manrope.variable} ${spaceMono.variable}`}>
+      <body>
+        <TooltipProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </TooltipProvider>
+      </body>
+    </html>
+  );
 }
