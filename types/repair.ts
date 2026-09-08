@@ -7,16 +7,26 @@ export const REPAIR_STATUSES = [
   "Testing",
   "Completed",
   "Collected",
+  "No Fix",
+  "Failed Repair",
+  "Returned Unrepaired",
+  "Cancelled",
 ] as const;
 
 export type RepairStatus = (typeof REPAIR_STATUSES)[number];
 
-// "Completed" is excluded here on purpose — completing a repair happens
-// through the dedicated "Mark Completed" action (which also issues a
-// pickup ticket), not by manually picking it from this dropdown.
-export const MANUAL_REPAIR_STATUSES = REPAIR_STATUSES.filter(
-  (s) => s !== "Completed"
-);
+// Terminal repair outcomes are recorded through the dedicated outcome workflow.
+// Manual status editing remains limited to the active workflow states.
+export const MANUAL_REPAIR_STATUSES = [
+  "Received",
+  "Diagnosis",
+  "Estimate Sent",
+  "Customer Approved",
+  "Repairing",
+  "Testing",
+] as const;
+
+export type ManualRepairStatus = (typeof MANUAL_REPAIR_STATUSES)[number];
 
 export const REPAIR_PRIORITIES = ["Low", "Normal", "Urgent"] as const;
 export type RepairPriority = (typeof REPAIR_PRIORITIES)[number];
@@ -45,6 +55,10 @@ export type Repair = {
   received_at: string;
   completed_at: string | null;
   created_at: string;
-  // Populated via the join in repairService.getRepairs()
+  company_id: string;
+  branch_id: string | null;
+  engineer_id: string | null;
+  assigned_at: string | null;
+  // Populated via joins.
   repair_tickets?: RepairTicket[];
 };
