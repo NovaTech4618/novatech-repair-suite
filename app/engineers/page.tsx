@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft, Plus, UserRound, Wallet } from "lucide-react";
+import AppLayout from "@/components/layout/AppLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { engineerService } from "@/services/engineerService";
 import { inventoryService } from "@/services/inventoryService";
 import EngineerShareStatementButton from "@/components/engineers/EngineerShareStatementButton";
@@ -267,10 +272,29 @@ export default function EngineersPage() {
     window.print();
   }
 
-  if (loading) return <div className="p-6 text-muted-foreground">Loading engineers...</div>;
+  const actionLabels: Record<NonNullable<Action>, string> = {
+    parts: "Record parts collected",
+    return: "Record parts returned",
+    payment: "Receive payment",
+    "payment-out": "Pay engineer",
+    opening: "Opening balance",
+  };
+
+  const inputClass = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15";
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="space-y-4 p-1">
+          <div className="h-8 w-48 animate-pulse rounded bg-slate-100" />
+          <div className="h-36 animate-pulse rounded-2xl bg-slate-100" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
-    <main className="space-y-6 p-6">
+    <AppLayout>
       <style jsx global>{`
         @media print {
           body * { visibility: hidden !important; }
@@ -280,85 +304,249 @@ export default function EngineersPage() {
         }
       `}</style>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Engineers</h1>
-          <p className="text-muted-foreground">Track contract technicians, parts collected, returns and payments.</p>
-        </div>
-        <Link href="/dashboard" className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Back to dashboard</Link>
-      </div>
-
-      {error && <div className="rounded-md border border-destructive/30 p-3 text-sm text-destructive print:hidden">{error}</div>}
-      {message && <div className="rounded-md border p-3 text-sm print:hidden">{message}</div>}
-
-      <section className="engineer-debit-report hidden print:block">
-        <div className="mb-6 border-b pb-4">
-          <h1 className="text-2xl font-bold">NOVATECH — Engineer Debit Statement</h1>
-          <p className="mt-1 text-lg font-semibold">Engineer: {selectedEngineer?.name ?? ""}</p>
-          <p>Period: {periodLabel}</p>
-          {selectedEngineer?.phone && <p>Phone: {selectedEngineer.phone}</p>}
-        </div>
-        <div className="mb-5 grid grid-cols-3 gap-4">
-          <div className="rounded border p-3"><p className="text-xs">Debit transactions</p><p className="text-xl font-bold">{debitTransactions.length}</p></div>
-          <div className="rounded border p-3"><p className="text-xs">Period debit</p><p className="text-xl font-bold">{money(debitTotal)}</p></div>
-          <div className="rounded border p-3"><p className="text-xs">Current outstanding balance</p><p className="text-xl font-bold">{money(Number(selectedBalance?.balance ?? 0))}</p></div>
-        </div>
-        <table className="w-full border-collapse text-sm">
-          <thead><tr className="border-b-2"><th className="p-2 text-left">Date</th><th className="p-2 text-left">Description</th><th className="p-2 text-left">Type</th><th className="p-2 text-right">Debit</th></tr></thead>
-          <tbody>{debitTransactions.map((transaction) => <tr key={transaction.id} className="border-b"><td className="p-2">{new Date(transaction.transaction_date).toLocaleDateString()}</td><td className="p-2">{transaction.description}</td><td className="p-2">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td><td className="p-2 text-right">{money(Number(transaction.debit))}</td></tr>)}</tbody>
-        </table>
-        <div className="mt-8 border-t pt-4 text-xs">Generated from NOVATECH Repair Suite • {new Date().toLocaleString()}</div>
-      </section>
-
-      {showEngineerForm && (
-        <form onSubmit={submitEngineer} className="rounded-xl border bg-muted/20 p-5 print:hidden">
-          <div className="mb-4 flex items-center justify-between">
-            <div><h2 className="font-semibold">{editingEngineer ? "Edit engineer" : "Add engineer"}</h2><p className="text-sm text-muted-foreground">Account history is preserved when an engineer is deactivated.</p></div>
-            <button type="button" onClick={() => setShowEngineerForm(false)} className="text-sm text-muted-foreground">Cancel</button>
+      <div className="space-y-7">
+        <header className="flex flex-wrap items-start justify-between gap-4 print:hidden">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Workshop operations</p>
+            <h1 className="mt-1 font-heading text-3xl font-bold tracking-tight text-slate-950">Engineers</h1>
+            <p className="mt-1 text-sm text-slate-500">Track contract technicians, parts collected, returns and payments.</p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm">Name *<input required value={engineerForm.name ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, name: e.target.value })} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-            <label className="text-sm">Phone<input value={engineerForm.phone ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, phone: e.target.value })} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-            <label className="text-sm">Business name<input value={engineerForm.business_name ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, business_name: e.target.value })} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-            <label className="text-sm">Address<input value={engineerForm.address ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, address: e.target.value })} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-            <label className="text-sm md:col-span-2">Notes<textarea value={engineerForm.notes ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, notes: e.target.value })} rows={2} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>
-          </div>
-          <button disabled={saving} type="submit" className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving..." : editingEngineer ? "Save changes" : "Add engineer"}</button>
-        </form>
-      )}
+          <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:border-teal-200 hover:text-teal-700">
+            <ArrowLeft className="size-4" /> Back to dashboard
+          </Link>
+        </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] print:hidden">
-        <section className="rounded-xl border">
-          <div className="flex items-center justify-between gap-3 border-b p-5"><div><h2 className="font-semibold">Engineer accounts</h2><p className="text-sm text-muted-foreground">Balance = debit minus credit.</p></div><button type="button" onClick={openCreate} className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground">+ Add Engineer</button></div>
-          <div className="divide-y">
-            {engineers.length === 0 ? <div className="p-8 text-center text-muted-foreground">No engineers found.</div> : engineers.map((engineer) => {
-              const balance = balanceMap.get(engineer.id);
-              return <div key={engineer.id} className={`p-4 transition hover:bg-muted/50 ${selectedId === engineer.id ? "bg-muted" : ""}`}><div className="flex items-start gap-3"><button type="button" onClick={() => void selectEngineer(engineer.id)} className="min-w-0 flex-1 text-left"><div className="flex items-center justify-between gap-4"><div><p className="font-medium">{engineer.name}</p><p className="text-sm text-muted-foreground">{engineer.phone || engineer.business_name || "No contact details"}</p></div><span className={`font-semibold ${Number(balance?.balance ?? 0) > 0 ? "text-destructive" : ""}`}>{money(Number(balance?.balance ?? 0))}</span></div><div className="mt-2 flex justify-between text-xs text-muted-foreground"><span className="capitalize">{engineer.status}</span><span>{Number(balance?.total_debit ?? 0) > 0 ? `${money(Number(balance?.total_debit))} debits` : "No activity"}</span></div></button><div className="flex shrink-0 gap-1"><button type="button" onClick={() => openEdit(engineer)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">Edit</button><button disabled={saving} type="button" onClick={() => void toggleStatus(engineer)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted disabled:opacity-50">{engineer.status === "active" ? "Deactivate" : "Activate"}</button></div></div></div>;
-            })}
+        {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 print:hidden">{error}</div>}
+        {message && <div className="rounded-xl border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800 print:hidden">{message}</div>}
+
+        <section className="engineer-debit-report hidden print:block">
+          <div className="mb-6 border-b pb-4">
+            <h1 className="text-2xl font-bold">NOVATECH — Engineer Debit Statement</h1>
+            <p className="mt-1 text-lg font-semibold">Engineer: {selectedEngineer?.name ?? ""}</p>
+            <p>Period: {periodLabel}</p>
+            {selectedEngineer?.phone && <p>Phone: {selectedEngineer.phone}</p>}
           </div>
+          <div className="mb-5 grid grid-cols-3 gap-4">
+            <div className="rounded border p-3"><p className="text-xs">Debit transactions</p><p className="text-xl font-bold">{debitTransactions.length}</p></div>
+            <div className="rounded border p-3"><p className="text-xs">Period debit</p><p className="text-xl font-bold">{money(debitTotal)}</p></div>
+            <div className="rounded border p-3"><p className="text-xs">Current outstanding balance</p><p className="text-xl font-bold">{money(Number(selectedBalance?.balance ?? 0))}</p></div>
+          </div>
+          <table className="w-full border-collapse text-sm">
+            <thead><tr className="border-b-2"><th className="p-2 text-left">Date</th><th className="p-2 text-left">Description</th><th className="p-2 text-left">Type</th><th className="p-2 text-right">Debit</th></tr></thead>
+            <tbody>{debitTransactions.map((transaction) => <tr key={transaction.id} className="border-b"><td className="p-2">{new Date(transaction.transaction_date).toLocaleDateString()}</td><td className="p-2">{transaction.description}</td><td className="p-2">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td><td className="p-2 text-right">{money(Number(transaction.debit))}</td></tr>)}</tbody>
+          </table>
+          <div className="mt-8 border-t pt-4 text-xs">Generated from NOVATECH Repair Suite • {new Date().toLocaleString()}</div>
         </section>
 
-        <section className="rounded-xl border">
-          {!selectedEngineer ? <div className="flex min-h-[420px] items-center justify-center p-8 text-center text-muted-foreground">Select an engineer to view their ledger.</div> : <>
-            <div className="border-b p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">{selectedEngineer.name}</h2><p className="text-sm text-muted-foreground">{selectedEngineer.phone || "No phone number"}</p></div><div className="text-right"><p className="text-xs text-muted-foreground">Current balance</p><p className={`text-2xl font-bold ${Number(selectedBalance?.balance ?? 0) > 0 ? "text-destructive" : ""}`}>{money(Number(selectedBalance?.balance ?? 0))}</p></div></div>
-              <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => setAction("parts")} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Record parts collected</button><button type="button" onClick={() => setAction("return")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Record parts returned</button><button type="button" onClick={() => setAction("payment")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Receive payment</button><button type="button" onClick={() => setAction("payment-out")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Pay engineer</button><button type="button" onClick={() => setAction("opening")} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Opening balance</button></div>
-              <div className="mt-3"><EngineerShareStatementButton engineer={selectedEngineer} balance={selectedBalance} transactions={filteredTransactions} /></div>
-            </div>
+        {showEngineerForm && (
+          <Card className="border-slate-200 shadow-sm print:hidden">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="font-heading text-lg">{editingEngineer ? "Edit engineer" : "Add engineer"}</CardTitle>
+                  <p className="mt-1 text-sm text-slate-500">Account history is preserved when an engineer is deactivated.</p>
+                </div>
+                <button type="button" onClick={() => setShowEngineerForm(false)} className="text-sm font-medium text-slate-500 hover:text-slate-800">Cancel</button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={submitEngineer}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-700">Name *<input required value={engineerForm.name ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, name: e.target.value })} className={inputClass} /></label>
+                  <label className="text-sm font-medium text-slate-700">Phone<input value={engineerForm.phone ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, phone: e.target.value })} className={inputClass} /></label>
+                  <label className="text-sm font-medium text-slate-700">Business name<input value={engineerForm.business_name ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, business_name: e.target.value })} className={inputClass} /></label>
+                  <label className="text-sm font-medium text-slate-700">Address<input value={engineerForm.address ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, address: e.target.value })} className={inputClass} /></label>
+                  <label className="text-sm font-medium text-slate-700 md:col-span-2">Notes<textarea value={engineerForm.notes ?? ""} onChange={(e) => setEngineerForm({ ...engineerForm, notes: e.target.value })} rows={2} className={inputClass} /></label>
+                </div>
+                <Button disabled={saving} type="submit" className="mt-4">{saving ? "Saving..." : editingEngineer ? "Save changes" : "Add engineer"}</Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-            {action && <form onSubmit={submitAction} className="border-b bg-muted/30 p-5"><div className="mb-4 flex items-center justify-between"><div><h3 className="font-semibold">{action === "parts" ? "Record parts collected" : action === "return" ? "Record parts returned" : action === "payment" ? "Receive payment from engineer" : action === "payment-out" ? "Pay engineer" : "Set opening balance"}</h3>{action === "return" && <p className="mt-1 text-xs text-muted-foreground">Returned stock is added back to inventory and credited to the engineer account.</p>}{action === "payment-out" && <p className="mt-1 text-xs text-muted-foreground">This records money paid by the shop to the engineer and reduces the engineer&apos;s outstanding balance.</p>}</div><button type="button" onClick={resetAction} className="text-sm text-muted-foreground">Cancel</button></div>
-              {(action === "parts" || action === "return") ? <div className="grid gap-4 md:grid-cols-3"><label className="text-sm md:col-span-2">Part<select value={inventoryId} onChange={(e) => { setInventoryId(e.target.value); const item = inventory.find((x) => x.id === e.target.value); setUnitPrice(item ? String(item.selling_price) : ""); }} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="">Select part</option>{inventory.map((item) => <option key={item.id} value={item.id}>{item.item_name} — {money(item.selling_price)} (stock: {item.quantity})</option>)}</select></label><label className="text-sm">Quantity<input type="number" min="1" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label><label className="text-sm">Unit price<input type="number" min="0" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5" /></label><label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label></div> : <div className="grid gap-4 md:grid-cols-2"><label className="text-sm">Amount<input required type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label>{(action === "payment" || action === "payment-out") && <label className="text-sm">Payment method<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-md border bg-background p-2.5"><option value="cash">Cash</option><option value="transfer">Transfer</option><option value="pos">POS</option><option value="other">Other</option></select></label>}<label className="text-sm md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1 w-full rounded-md border bg-background p-2.5" /></label></div>}
-              <button disabled={saving} type="submit" className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{saving ? "Saving..." : action === "payment-out" ? "Record payment to engineer" : action === "payment" ? "Record payment received" : "Save transaction"}</button>
-            </form>}
-
-            <div className="p-5">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Transaction history</h3><span className="text-sm text-muted-foreground">{filteredTransactions.length} of {transactions.length} transactions</span></div><div className="flex flex-wrap gap-2"><select aria-label="Filter transaction period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} className="rounded-md border bg-background px-3 py-2 text-sm"><option value="all">All time</option><option value="day">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option></select><button type="button" onClick={downloadDebitPdf} className="rounded-md border px-3 py-2 text-sm hover:bg-muted">Download debit PDF</button></div></div>
-              <div className="mb-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Period</p><p className="font-semibold">{periodLabel}</p></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Period debits</p><p className="font-semibold">{money(debitTotal)}</p></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Current balance</p><p className="font-semibold">{money(Number(selectedBalance?.balance ?? 0))}</p></div></div>
-              {detailLoading ? <p className="py-8 text-center text-muted-foreground">Loading ledger...</p> : filteredTransactions.length === 0 ? <p className="rounded-md border border-dashed p-8 text-center text-muted-foreground">No transactions in this period.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-3">Date</th><th className="p-3">Description</th><th className="p-3">Type</th><th className="p-3 text-right">Debit</th><th className="p-3 text-right">Credit</th><th className="p-3 text-right">Balance</th></tr></thead><tbody>{[...filteredTransactions].reverse().map((transaction, index, chronological) => { const running = chronological.slice(0, index + 1).reduce((sum, row) => sum + Number(row.debit) - Number(row.credit), 0); return <tr key={transaction.id} className="border-b last:border-0"><td className="whitespace-nowrap p-3">{new Date(transaction.transaction_date).toLocaleDateString()}</td><td className="p-3">{transaction.description}</td><td className="p-3">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td><td className="p-3 text-right">{Number(transaction.debit) ? money(Number(transaction.debit)) : "—"}</td><td className="p-3 text-right">{Number(transaction.credit) ? money(Number(transaction.credit)) : "—"}</td><td className="p-3 text-right font-medium">{money(running)}</td></tr>; })}</tbody></table></div>}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] print:hidden">
+          <Card className="border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-5">
+              <div>
+                <CardTitle className="font-heading text-lg">Engineer accounts</CardTitle>
+                <p className="mt-1 text-sm text-slate-500">Balance = debit minus credit.</p>
+              </div>
+              <Button size="sm" onClick={openCreate}><Plus className="size-4" /> Add engineer</Button>
             </div>
-          </>}
-        </section>
+            <div className="divide-y divide-slate-100">
+              {engineers.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 p-10 text-center text-slate-500">
+                  <UserRound className="size-6 text-slate-300" />
+                  No engineers found.
+                </div>
+              ) : engineers.map((engineer) => {
+                const balance = balanceMap.get(engineer.id);
+                const owing = Number(balance?.balance ?? 0) > 0;
+                return (
+                  <div key={engineer.id} className={`p-4 transition ${selectedId === engineer.id ? "bg-teal-50/60" : "hover:bg-slate-50"}`}>
+                    <div className="flex items-start gap-3">
+                      <button type="button" onClick={() => void selectEngineer(engineer.id)} className="min-w-0 flex-1 text-left">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-900">{engineer.name}</p>
+                            <p className="truncate text-sm text-slate-500">{engineer.phone || engineer.business_name || "No contact details"}</p>
+                          </div>
+                          <span className={`font-heading font-bold ${owing ? "text-rose-600" : "text-slate-900"}`}>{money(Number(balance?.balance ?? 0))}</span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                          <Badge variant={engineer.status === "active" ? "secondary" : "outline"} className="capitalize">{engineer.status}</Badge>
+                          <span>{Number(balance?.total_debit ?? 0) > 0 ? `${money(Number(balance?.total_debit))} debits` : "No activity"}</span>
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 gap-1.5">
+                        <button type="button" onClick={() => openEdit(engineer)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Edit</button>
+                        <button disabled={saving} type="button" onClick={() => void toggleStatus(engineer)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50">{engineer.status === "active" ? "Deactivate" : "Activate"}</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card className="border-slate-200 shadow-sm">
+            {!selectedEngineer ? (
+              <div className="flex min-h-[420px] flex-col items-center justify-center gap-2 p-8 text-center text-slate-500">
+                <Wallet className="size-6 text-slate-300" />
+                Select an engineer to view their ledger.
+              </div>
+            ) : (
+              <>
+                <div className="border-b border-slate-100 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h2 className="font-heading text-xl font-semibold text-slate-950">{selectedEngineer.name}</h2>
+                      <p className="text-sm text-slate-500">{selectedEngineer.phone || "No phone number"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Current balance</p>
+                      <p className={`font-heading text-2xl font-bold ${Number(selectedBalance?.balance ?? 0) > 0 ? "text-rose-600" : "text-slate-950"}`}>{money(Number(selectedBalance?.balance ?? 0))}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => setAction("parts")}>Record parts collected</Button>
+                    <Button size="sm" variant="outline" onClick={() => setAction("return")}>Record parts returned</Button>
+                    <Button size="sm" variant="outline" onClick={() => setAction("payment")}>Receive payment</Button>
+                    <Button size="sm" variant="outline" onClick={() => setAction("payment-out")}>Pay engineer</Button>
+                    <Button size="sm" variant="outline" onClick={() => setAction("opening")}>Opening balance</Button>
+                  </div>
+                  <div className="mt-3"><EngineerShareStatementButton engineer={selectedEngineer} balance={selectedBalance} transactions={filteredTransactions} /></div>
+                </div>
+
+                {action && (
+                  <form onSubmit={submitAction} className="border-b border-slate-100 bg-slate-50/60 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-heading font-semibold text-slate-900">{actionLabels[action]}</h3>
+                        {action === "return" && <p className="mt-1 text-xs text-slate-500">Returned stock is added back to inventory and credited to the engineer account.</p>}
+                        {action === "payment-out" && <p className="mt-1 text-xs text-slate-500">This records money paid by the shop to the engineer and reduces the engineer&apos;s outstanding balance.</p>}
+                      </div>
+                      <button type="button" onClick={resetAction} className="text-sm font-medium text-slate-500 hover:text-slate-800">Cancel</button>
+                    </div>
+
+                    {(action === "parts" || action === "return") ? (
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <label className="text-sm font-medium text-slate-700 md:col-span-2">Part
+                          <select value={inventoryId} onChange={(e) => { setInventoryId(e.target.value); const item = inventory.find((x) => x.id === e.target.value); setUnitPrice(item ? String(item.selling_price) : ""); }} className={inputClass}>
+                            <option value="">Select part</option>
+                            {inventory.map((item) => <option key={item.id} value={item.id}>{item.item_name} — {money(item.selling_price)} (stock: {item.quantity})</option>)}
+                          </select>
+                        </label>
+                        <label className="text-sm font-medium text-slate-700">Quantity<input type="number" min="1" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className={inputClass} /></label>
+                        <label className="text-sm font-medium text-slate-700">Unit price<input type="number" min="0" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} className={inputClass} /></label>
+                        <label className="text-sm font-medium text-slate-700 md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className={inputClass} /></label>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="text-sm font-medium text-slate-700">Amount<input required type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className={inputClass} /></label>
+                        {(action === "payment" || action === "payment-out") && (
+                          <label className="text-sm font-medium text-slate-700">Payment method
+                            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={inputClass}>
+                              <option value="cash">Cash</option>
+                              <option value="transfer">Transfer</option>
+                              <option value="pos">POS</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </label>
+                        )}
+                        <label className="text-sm font-medium text-slate-700 md:col-span-2">Notes<input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className={inputClass} /></label>
+                      </div>
+                    )}
+
+                    <Button disabled={saving} type="submit" className="mt-4">{saving ? "Saving..." : action === "payment-out" ? "Record payment to engineer" : action === "payment" ? "Record payment received" : "Save transaction"}</Button>
+                  </form>
+                )}
+
+                <div className="p-5">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-heading font-semibold text-slate-900">Transaction history</h3>
+                      <span className="text-sm text-slate-500">{filteredTransactions.length} of {transactions.length} transactions</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <select aria-label="Filter transaction period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500">
+                        <option value="all">All time</option>
+                        <option value="day">Today</option>
+                        <option value="week">This week</option>
+                        <option value="month">This month</option>
+                        <option value="year">This year</option>
+                      </select>
+                      <button type="button" onClick={downloadDebitPdf} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:border-teal-200 hover:text-teal-700">Download debit PDF</button>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-xs text-slate-500">Period</p><p className="font-heading font-semibold text-slate-900">{periodLabel}</p></div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-xs text-slate-500">Period debits</p><p className="font-heading font-semibold text-slate-900">{money(debitTotal)}</p></div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-xs text-slate-500">Current balance</p><p className="font-heading font-semibold text-slate-900">{money(Number(selectedBalance?.balance ?? 0))}</p></div>
+                  </div>
+
+                  {detailLoading ? (
+                    <p className="py-8 text-center text-slate-500">Loading ledger...</p>
+                  ) : filteredTransactions.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-8 text-center text-slate-500">No transactions in this period.</p>
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-slate-100">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                          <tr>
+                            <th className="px-3 py-3 text-left">Date</th>
+                            <th className="px-3 py-3 text-left">Description</th>
+                            <th className="px-3 py-3 text-left">Type</th>
+                            <th className="px-3 py-3 text-right">Debit</th>
+                            <th className="px-3 py-3 text-right">Credit</th>
+                            <th className="px-3 py-3 text-right">Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...filteredTransactions].reverse().map((transaction, index, chronological) => {
+                            const running = chronological.slice(0, index + 1).reduce((sum, row) => sum + Number(row.debit) - Number(row.credit), 0);
+                            return (
+                              <tr key={transaction.id} className="border-t border-slate-100">
+                                <td className="whitespace-nowrap px-3 py-3 text-slate-600">{new Date(transaction.transaction_date).toLocaleDateString()}</td>
+                                <td className="px-3 py-3 text-slate-700">{transaction.description}</td>
+                                <td className="px-3 py-3 text-slate-500">{transactionLabel[transaction.transaction_type] ?? transaction.transaction_type}</td>
+                                <td className="px-3 py-3 text-right text-slate-700">{Number(transaction.debit) ? money(Number(transaction.debit)) : "—"}</td>
+                                <td className="px-3 py-3 text-right text-slate-700">{Number(transaction.credit) ? money(Number(transaction.credit)) : "—"}</td>
+                                <td className="px-3 py-3 text-right font-semibold text-slate-900">{money(running)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
       </div>
-    </main>
+    </AppLayout>
   );
 }

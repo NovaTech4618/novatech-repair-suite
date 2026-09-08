@@ -207,7 +207,7 @@ export default function PartsCreditPage() {
           </h2>
 
           <p className="text-sm text-muted-foreground">
-            Record a part collected by a customer or engineer.
+            Record a part collected by a customer.
           </p>
         </div>
 
@@ -218,7 +218,7 @@ export default function PartsCreditPage() {
           {/* Customer */}
           <div>
             <label className="mb-1.5 block text-sm font-medium">
-              Customer / Engineer *
+              Customer *
             </label>
 
             <select
@@ -227,7 +227,7 @@ export default function PartsCreditPage() {
               className="w-full rounded-md border bg-background p-2.5"
             >
               <option value="">
-                Select customer / engineer
+                Select customer
               </option>
 
               {customers.map((customer) => (

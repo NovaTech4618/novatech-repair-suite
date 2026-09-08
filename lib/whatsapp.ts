@@ -3,6 +3,10 @@ export function normalizeWhatsAppPhone(phone: string) {
   if (!digits) return "";
   if (digits.startsWith("234")) return digits;
   if (digits.startsWith("0")) return `234${digits.slice(1)}`;
+  // Handles numbers entered without the leading 0 (e.g. "8012345678"),
+  // which otherwise fell through unchanged and produced a broken wa.me
+  // link with no country code.
+  if (digits.length === 10) return `234${digits}`;
   return digits;
 }
 
