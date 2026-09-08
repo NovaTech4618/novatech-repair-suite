@@ -95,6 +95,12 @@ BEGIN
   IF has_function_privilege('anon', 'public.record_customer_debt(uuid,text,uuid,numeric,numeric,uuid,uuid,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'record_customer_debt must not be executable by anon';
   END IF;
+  IF NOT has_function_privilege('authenticated', 'public.change_repair_status(uuid,text,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'change_repair_status is not executable by authenticated users';
+  END IF;
+  IF has_function_privilege('anon', 'public.change_repair_status(uuid,text,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'change_repair_status must not be executable by anon';
+  END IF;
 END $$;
 
 -- Data-quality smoke checks. These should remain zero.
@@ -113,3 +119,13 @@ UNION ALL
 SELECT 'invalid_debt_entries', count(*)
 FROM public.customer_debt_ledger
 WHERE NOT ((debit > 0 AND coalesce(credit,0)=0) OR (credit > 0 AND coalesce(debit,0)=0));
+
+-- Repair financial consistency: the cached deposit must equal recorded payments.
+SELECT 'repair_payment_deposit_mismatch' AS check_name, count(*) AS failures
+FROM public.repairs r
+LEFT JOIN (
+  SELECT repair_id, coalesce(sum(amount), 0) AS paid
+  FROM public.repair_payments
+  GROUP BY repair_id
+) p ON p.repair_id = r.id
+WHERE round(coalesce(r.deposit, 0), 2) <> round(coalesce(p.paid, 0), 2);
