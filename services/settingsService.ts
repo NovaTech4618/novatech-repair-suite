@@ -10,7 +10,7 @@ export const settingsService = {
 
     return await supabase
       .from("profiles")
-      .select("id, full_name, role, company_id, companies(id, name)")
+      .select("id, full_name, role, company_id, companies(id, name, logo_url)")
       .eq("id", session.user.id)
       .single();
   },
@@ -26,6 +26,13 @@ export const settingsService = {
     return await supabase
       .from("companies")
       .update({ name })
+      .eq("id", companyId);
+  },
+
+  async updateCompanyLogo(companyId: string, logoUrl: string | null) {
+    return await supabase
+      .from("companies")
+      .update({ logo_url: logoUrl })
       .eq("id", companyId);
   },
 };
