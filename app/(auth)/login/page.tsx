@@ -6,73 +6,196 @@ import { ArrowRight, Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
+type AuthMode = "login" | "signup" | "setup" | "verify" | "forgot" | "reset";
+
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "signup" | "setup" | "verify" | "forgot" | "reset">("login");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setMode("reset");
-    });
+  function getAuthRedirectUrl() {
+    return `${window.location.origin}/login`;
+  }
 
-    return () => subscription.unsubscribe();
-  }, []);
+  function getAuthUrlValue(name: string) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const hashParams = new URLSearchParams(hash);
+    return searchParams.get(name) ?? hashParams.get(name);
+  }
+
+  function hasRecoverySignal() {
+    return getAuthUrlValue("type") === "recovery";
+  }
+
+  function showCallbackError() {
+    const error = getAuthUrlValue("error_description") ?? getAuthUrlValue("error");
+    if (!error) return;
+
+    const friendlyError = decodeURIComponent(error.replace(/\+/g, " "));
+    setAuthError(
+      friendlyError.toLowerCase().includes("expired") ||
+        friendlyError.toLowerCase().includes("invalid")
+        ? "That link is invalid or has expired. Request a new one and try again."
+        : friendlyError,
+    );
+  }
 
   async function ensureCompanyThenRedirect() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
-    const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).maybeSingle();
-    if (profile?.company_id) { setLoading(false); router.push("/dashboard"); return; }
-    const { data: joinedCompanyId, error: inviteError } = await supabase.rpc("accept_staff_invitation");
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.company_id) {
+      setLoading(false);
+      router.replace("/dashboard");
+      return;
+    }
+
+    const { data: joinedCompanyId, error: inviteError } = await supabase.rpc(
+      "accept_staff_invitation",
+    );
+
     setLoading(false);
-    if (!inviteError && joinedCompanyId) { toast.success("Welcome to the team!"); router.push("/dashboard"); return; }
+
+    if (!inviteError && joinedCompanyId) {
+      toast.success("Welcome to the team!");
+      router.replace("/dashboard");
+      return;
+    }
+
     setMode("setup");
   }
 
+  useEffect(() => {
+    showCallbackError();
+
+    if (hasRecoverySignal()) {
+      setMode("reset");
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          setAuthError("");
+          setMode("reset");
+          return;
+        }
+
+        if (
+          session?.user &&
+          (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+          !hasRecoverySignal()
+        ) {
+          window.setTimeout(() => {
+            void ensureCompanyThenRedirect();
+          }, 0);
+        }
+      },
+    );
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
   async function handleCreateCompany(e: React.FormEvent) {
     e.preventDefault();
-    if (!companyName.trim()) { toast.error("Business name is required."); return; }
+    if (!companyName.trim()) {
+      toast.error("Business name is required.");
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.rpc("create_company_for_new_user", { company_name: companyName.trim() });
+    const { error } = await supabase.rpc("create_company_for_new_user", {
+      company_name: companyName.trim(),
+    });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Welcome to NOVATECH!");
-    router.push("/dashboard");
+    router.replace("/dashboard");
   }
 
   async function resendVerification() {
-    if (!email.trim()) { toast.error("Enter your email first."); return; }
+    if (!email.trim()) {
+      toast.error("Enter your email first.");
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+      },
+    });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Verification email sent again.");
   }
 
   async function handleForgotPassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) { toast.error("Enter your email first."); return; }
+    if (!email.trim()) {
+      toast.error("Enter your email first.");
+      return;
+    }
+
     setLoading(true);
-    const redirectTo = `${window.location.origin}/login`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: getAuthRedirectUrl(),
+    });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Password reset email sent.");
   }
 
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword.length < 8) { toast.error("Use at least 8 characters for your new password."); return; }
+    if (newPassword.length < 8) {
+      toast.error("Use at least 8 characters for your new password.");
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Password updated. Welcome back.");
     setNewPassword("");
     await ensureCompanyThenRedirect();
@@ -80,29 +203,61 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) { toast.error("Email and password are required."); return; }
+    if (!email.trim() || !password.trim()) {
+      toast.error("Email and password are required.");
+      return;
+    }
+
+    setAuthError("");
     setLoading(true);
 
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
-      if (error) { toast.error(error.message); setLoading(false); return; }
-      if (!data.session) { setLoading(false); setMode("verify"); return; }
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: getAuthRedirectUrl(),
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!data.session) {
+        setLoading(false);
+        setMode("verify");
+        return;
+      }
+
       await ensureCompanyThenRedirect();
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
     if (error) {
       if (error.message.toLowerCase().includes("email not confirmed")) {
         setLoading(false);
         setMode("verify");
         return;
       }
+
       toast.error("Unable to sign in. Check your email and password.");
       setLoading(false);
       return;
     }
+
     await ensureCompanyThenRedirect();
+  }
+
+  if (authError && (mode === "login" || mode === "signup" || mode === "forgot" || mode === "verify")) {
+    // Keep callback errors visible while still allowing the user to recover.
   }
 
   if (mode === "verify") {
@@ -114,8 +269,9 @@ export default function LoginPage() {
             <div className="mx-auto mt-8 grid size-14 place-items-center rounded-2xl bg-teal-50 text-teal-700"><Mail className="size-6" /></div>
             <h1 className="mt-6 text-center font-heading text-3xl font-bold tracking-tight">Check your email</h1>
             <p className="mt-3 text-center text-sm leading-6 text-slate-500">We sent a verification link to <strong className="font-semibold text-slate-800">{email}</strong>.</p>
+            {authError && <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-xs leading-5 text-red-700">{authError}</p>}
             <button type="button" onClick={resendVerification} disabled={loading} className="mt-7 w-full rounded-xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50">{loading ? "Sending…" : "Resend verification email"}</button>
-            <button type="button" onClick={() => setMode("login")} className="mt-3 w-full rounded-xl border border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Back to sign in</button>
+            <button type="button" onClick={() => { setAuthError(""); setMode("login"); }} className="mt-3 w-full rounded-xl border border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Back to sign in</button>
             <p className="mt-6 text-center text-xs text-slate-400">Check spam or promotions if it doesn’t arrive.</p>
           </div>
         </div>
@@ -144,14 +300,15 @@ export default function LoginPage() {
     return (
       <main className="min-h-screen bg-[#f5f7f6] px-5 py-6 text-slate-950 sm:px-8">
         <div className="mx-auto flex min-h-[92vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-35px_rgba(15,23,42,0.25)] sm:p-10">
+          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-35px_rgba(15,23-92,0.25)] sm:p-10">
             <BrandMark />
             <div className="mt-8"><p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">Account recovery</p><h1 className="mt-2 font-heading text-3xl font-bold tracking-tight">Reset your password</h1><p className="mt-3 text-sm leading-6 text-slate-500">Enter your account email and we’ll send a secure reset link.</p></div>
+            {authError && <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-xs leading-5 text-red-700">{authError}</p>}
             <form onSubmit={handleForgotPassword} className="mt-7 space-y-4">
               <FieldLabel label="Email"><input type="email" autoFocus autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="control" /></FieldLabel>
               <button type="submit" disabled={loading} className="w-full rounded-xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50">{loading ? "Sending reset link…" : "Send reset link"}</button>
             </form>
-            <button type="button" onClick={() => setMode("login")} className="mt-5 w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-900">Back to sign in</button>
+            <button type="button" onClick={() => { setAuthError(""); setMode("login"); }} className="mt-5 w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-900">Back to sign in</button>
           </div>
         </div>
       </main>
@@ -192,6 +349,7 @@ export default function LoginPage() {
           <div className="mx-auto w-full max-w-md">
             <div className="lg:hidden"><BrandMark /></div>
             <div className="mb-8 mt-10 lg:mt-0"><p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">{signup ? "Create your workspace" : "Welcome back"}</p><h1 className="mt-2 font-heading text-4xl font-bold tracking-tight">{signup ? "Start with NOVATECH." : "Sign in to your workshop."}</h1><p className="mt-3 text-sm leading-6 text-slate-500">{signup ? "Create your account, then set up the business workspace." : "Everything you need to run the repair desk is here."}</p></div>
+            {authError && <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-xs leading-5 text-red-700">{authError}</p>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <FieldLabel label="Email"><div className="relative"><Mail className="icon" /><input type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="control pl-11" /></div></FieldLabel>
@@ -202,7 +360,7 @@ export default function LoginPage() {
 
             <div className="mt-7 flex items-center gap-3 text-[11px] font-medium text-slate-400"><div className="h-px flex-1 bg-slate-200" />SECURE WORKSPACE<div className="h-px flex-1 bg-slate-200" /></div>
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500"><ShieldCheck className="size-4 text-teal-700" />Your workspace is protected by your account permissions.</div>
-            <button type="button" onClick={() => setMode(signup ? "login" : "signup")} className="mt-7 w-full text-center text-sm font-semibold text-teal-700 hover:text-teal-800">{signup ? "Already have an account? Sign in" : "New to NOVATECH? Create an account"}</button>
+            <button type="button" onClick={() => { setAuthError(""); setMode(signup ? "login" : "signup"); }} className="mt-7 w-full text-center text-sm font-semibold text-teal-700 hover:text-teal-800">{signup ? "Already have an account? Sign in" : "New to NOVATECH? Create an account"}</button>
             {signup && <p className="mt-5 text-center text-xs leading-5 text-slate-400">You’ll verify your email before entering the workshop.</p>}
           </div>
         </section>
