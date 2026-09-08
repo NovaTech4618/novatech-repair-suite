@@ -8,7 +8,7 @@ export default function RepairStoryVideo() {
   const [videoFailed, setVideoFailed] = useState(false);
 
   return (
-    <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-slate-950">
+    <div className="relative aspect-[4/3] overflow-hidden rounded-[1.75rem] bg-slate-950 shadow-[0_30px_90px_-45px_rgba(15,23,42,0.7)]">
       {!videoFailed ? (
         <video
           className="absolute inset-0 h-full w-full object-cover"
@@ -25,7 +25,7 @@ export default function RepairStoryVideo() {
         </video>
       ) : null}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/15 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/10 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
         <div className="flex items-end justify-between gap-4">
           <div>
