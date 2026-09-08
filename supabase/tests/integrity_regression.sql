@@ -89,10 +89,10 @@ BEGIN
   IF has_function_privilege('anon', 'public.record_inventory_movement(uuid,text,integer,numeric,text,uuid,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'record_inventory_movement must not be executable by anon';
   END IF;
-  IF NOT has_function_privilege('authenticated', 'public.record_customer_debt(uuid,uuid,text,numeric,numeric,text,text,uuid)', 'EXECUTE') THEN
+  IF NOT has_function_privilege('authenticated', 'public.record_customer_debt(uuid,text,uuid,numeric,numeric,uuid,uuid,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'record_customer_debt is not executable by authenticated users';
   END IF;
-  IF has_function_privilege('anon', 'public.record_customer_debt(uuid,uuid,text,numeric,numeric,text,text,uuid)', 'EXECUTE') THEN
+  IF has_function_privilege('anon', 'public.record_customer_debt(uuid,text,uuid,numeric,numeric,uuid,uuid,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'record_customer_debt must not be executable by anon';
   END IF;
 END $$;
