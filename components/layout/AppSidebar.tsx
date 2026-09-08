@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, BarChart3, BellRing, Bot, Building2, ClipboardCheck, FileText, HandCoins, HelpCircle, LayoutDashboard, MessageCircle, Package, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench, Truck } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, BellRing, Bot, Building2, ClipboardCheck, FileText, HandCoins, HelpCircle, LayoutDashboard, MessageCircle, Package, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench, Truck } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { staffService } from "@/services/staffService";
 import type { StaffRole } from "@/types/staff";
@@ -90,7 +90,7 @@ export default function AppSidebar() {
           <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">More</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {[{ title: "Alerts", url: "/alerts", icon: AlertTriangle }, { title: "Customer Requests", url: "/customer-requests", icon: BellRing }].map(renderItem)}
+              {[{ title: "Activity", url: "/activity", icon: Activity }, { title: "Alerts", url: "/alerts", icon: AlertTriangle }, { title: "Customer Requests", url: "/customer-requests", icon: BellRing }].map(renderItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
