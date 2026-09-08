@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import RepairStoryVideo from "@/components/marketing/RepairStoryVideo";
+import { NovatechLogo } from "@/components/brand/NovatechLogo";
 
 export const metadata: Metadata = {
   title: "Repair Shop Management Software | NOVATECH",
@@ -33,12 +34,8 @@ export default function HomePage() {
     <main className="min-h-screen bg-[#f7f9f8] text-slate-950">
       <nav className="sticky top-0 z-30 border-b border-slate-200/80 bg-[#f7f9f8]/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-2xl bg-slate-950 font-heading text-lg font-bold text-white">N</span>
-            <span>
-              <span className="block font-heading text-lg font-bold tracking-tight">NOVATECH</span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Repair Suite</span>
-            </span>
+          <Link href="/" aria-label="NOVATECH home" className="shrink-0">
+            <NovatechLogo />
           </Link>
           <div className="flex items-center gap-2 sm:gap-5">
             <Link href="#solution" className="hidden text-sm font-medium text-slate-600 hover:text-slate-950 sm:block">Solution</Link>
@@ -134,7 +131,7 @@ export default function HomePage() {
 
       <footer className="border-t border-slate-800 bg-slate-950 px-6 py-10 text-slate-400 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <span className="font-semibold text-slate-200">NOVATECH Repair Suite</span>
+          <Link href="/" aria-label="NOVATECH home" className="shrink-0"><NovatechLogo dark /></Link>
           <div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/login" className="hover:text-white">Sign in</Link><Link href="/help" className="hover:text-white">Help & Support</Link><Link href="/settings/subscription" className="hover:text-white">Subscription</Link></div>
         </div>
       </footer>
