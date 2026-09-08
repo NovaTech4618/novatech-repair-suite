@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "./AppSidebar";
 import Header from "./Header";
+import FloatingAssistant from "@/components/assistant/FloatingAssistant";
 
 export default function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default function AppLayout({
           </div>
         </main>
       </SidebarInset>
+      <FloatingAssistant />
     </SidebarProvider>
   );
 }
