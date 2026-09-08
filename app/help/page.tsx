@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, Bot, Boxes, CircleHelp, CreditCard, MessageCircle, ShieldCheck, Users, Wrench } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, Bot, Boxes, CircleHelp, CreditCard, MessageCircle, ShieldCheck, Users, Wrench } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 
 const topics = [
   { title: "Getting started", description: "Set up your business, branches and team, then start your first repair workflow.", href: "/settings", icon: CircleHelp },
   { title: "Repairs", description: "Create intake records, assign engineers, track progress, quote work and complete handover.", href: "/repairs", icon: Wrench },
+  { title: "Activity history", description: "See important repair, stock and money events in one operational timeline.", href: "/activity", icon: Activity },
   { title: "Inventory", description: "Manage stock, purchases, transfers, low-stock alerts and technician parts accountability.", href: "/inventory", icon: Boxes },
   { title: "Billing & money", description: "Use sales, invoices, payments, outstanding balances and finance together.", href: "/finance", icon: CreditCard },
   { title: "WhatsApp", description: "Send fast customer updates and payment reminders from the communication workspace.", href: "/whatsapp", icon: MessageCircle },
