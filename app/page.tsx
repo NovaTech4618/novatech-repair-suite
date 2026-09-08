@@ -51,8 +51,8 @@ export default function HomePage() {
       <section className="relative overflow-hidden border-b border-slate-200">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(20,184,166,0.16),transparent_34%),radial-gradient(circle_at_10%_35%,rgba(15,23,42,0.05),transparent_32%)]" />
         <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
-          <div className="grid items-center gap-12 lg:grid-cols-[0.86fr_1.14fr] lg:gap-16">
-            <div>
+          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+            <div className="max-w-2xl">
               <div className="inline-flex items-center rounded-full border border-teal-600/20 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-teal-700 shadow-sm">Built around the repair shop</div>
               <h1 className="mt-7 max-w-3xl font-heading text-5xl font-bold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl">Your whole repair shop, finally in one place.</h1>
               <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">NOVATECH replaces notebook chaos, scattered chats and disconnected records with one clear operational workspace for the front desk, workshop and management.</p>
@@ -65,9 +65,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-slate-800 bg-slate-950 p-2 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)] sm:p-3">
+            <div className="lg:pl-2">
               <RepairStoryVideo />
-              <div className="border-t border-white/10 bg-slate-950 px-5 py-3 text-center text-xs text-slate-400">A short product story: device arrives → engineer → parts → customer update → payment & pickup.</div>
             </div>
           </div>
         </div>
