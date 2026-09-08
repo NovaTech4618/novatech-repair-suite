@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: novatech-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # Build-time placeholders only. Production/runtime values stay in the deployment environment.
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
