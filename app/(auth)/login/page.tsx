@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -8,12 +8,21 @@ import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "signup" | "setup" | "verify" | "forgot">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "setup" | "verify" | "forgot" | "reset">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setMode("reset");
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   async function ensureCompanyThenRedirect() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -55,6 +64,18 @@ export default function LoginPage() {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Password reset email sent.");
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword.length < 8) { toast.error("Use at least 8 characters for your new password."); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Password updated. Welcome back.");
+    setNewPassword("");
+    await ensureCompanyThenRedirect();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -131,6 +152,25 @@ export default function LoginPage() {
               <button type="submit" disabled={loading} className="w-full rounded-xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50">{loading ? "Sending reset link…" : "Send reset link"}</button>
             </form>
             <button type="button" onClick={() => setMode("login")} className="mt-5 w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-900">Back to sign in</button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (mode === "reset") {
+    return (
+      <main className="min-h-screen bg-[#f5f7f6] px-5 py-6 text-slate-950 sm:px-8">
+        <div className="mx-auto flex min-h-[92vh] max-w-md items-center justify-center">
+          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-35px_rgba(15,23,42,0.25)] sm:p-10">
+            <BrandMark />
+            <div className="mx-auto mt-8 grid size-14 place-items-center rounded-2xl bg-teal-50 text-teal-700"><LockKeyhole className="size-6" /></div>
+            <h1 className="mt-6 text-center font-heading text-3xl font-bold tracking-tight">Choose a new password</h1>
+            <p className="mt-3 text-center text-sm leading-6 text-slate-500">Use at least 8 characters, then you’ll go straight back to your workshop.</p>
+            <form onSubmit={handleResetPassword} className="mt-7 space-y-4">
+              <FieldLabel label="New password"><div className="relative"><LockKeyhole className="icon" /><input type={showPassword ? "text" : "password"} autoFocus autoComplete="new-password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="control pl-11 pr-11" /><button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button></div></FieldLabel>
+              <button type="submit" disabled={loading} className="group flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50">{loading ? "Updating password…" : "Update password"}<ArrowRight className="size-4" /></button>
+            </form>
           </div>
         </div>
       </main>
