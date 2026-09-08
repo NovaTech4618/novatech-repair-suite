@@ -1,13 +1,71 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "./AppSidebar";
 import Header from "./Header";
 import FloatingAssistant from "@/components/assistant/FloatingAssistant";
+import { getCurrentSession, supabase } from "@/lib/supabase";
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkAuth = async () => {
+      const session = await getCurrentSession();
+      if (!mounted) return;
+
+      if (!session?.user) {
+        router.replace("/login");
+        return;
+      }
+
+      setCheckingAuth(false);
+    };
+
+    void checkAuth();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
+      if (event === "SIGNED_OUT" || !session?.user) {
+        router.replace("/login");
+        return;
+      }
+
+      setCheckingAuth(false);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [pathname, router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[var(--background)]">
+        <div className="flex min-h-screen items-center justify-center px-6">
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-medium text-slate-600 shadow-sm">
+            <span className="size-2 animate-pulse rounded-full bg-teal-600" />
+            Checking your workspace…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
