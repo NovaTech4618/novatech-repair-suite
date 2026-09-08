@@ -74,7 +74,31 @@ export const repairService = {
   },
 
   async updateRepair(id: string, repair: { technician: string | null; issue: string; diagnosis: string | null; repair_notes: string | null; solution: string | null; priority: string; deposit: number; expected_completion_date: string | null; estimated_cost: number | null; final_cost: number | null; status: string; }) {
-    return await supabase.from("repairs").update(repair).eq("id", id);
+    const { data: current, error: readError } = await supabase
+      .from("repairs")
+      .select("status")
+      .eq("id", id)
+      .single<{ status: string }>();
+    if (readError) return { data: null, error: readError };
+
+    // Keep ordinary repair edits compatible with the existing form, but never let a
+    // status edit bypass the database transition rules and status history.
+    const { status: nextStatus, ...editableFields } = repair;
+    const { data, error } = await supabase
+      .from("repairs")
+      .update(editableFields)
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) return { data: null, error };
+
+    if (nextStatus && nextStatus !== current.status) {
+      const transition = await this.changeStatus(id, nextStatus);
+      if (transition.error) return { data: null, error: transition.error };
+      return transition;
+    }
+
+    return { data, error: null };
   },
 
   async changeStatus(id: string, status: string, note?: string | null) {
