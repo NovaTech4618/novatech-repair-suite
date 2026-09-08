@@ -19,7 +19,7 @@ const workflow = [
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <main className="mx-auto w-full max-w-[1500px] space-y-6 p-5 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-[1500px] space-y-6 p-5 sm:p-6 lg:p-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-teal-700">Workshop dashboard</p>
@@ -32,14 +32,17 @@ export default function DashboardPage() {
           </Link>
         </header>
 
-        <section className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">How NOVATECH works</p>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-teal-600" />
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">Repair workflow</p>
+              </div>
               <h2 className="mt-2 font-heading text-xl font-bold tracking-tight text-slate-950">One repair, one clear journey.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">Start with the customer and device. NOVATECH keeps the repair, engineer, parts, invoice and payment connected as the job moves through your workshop.</p>
             </div>
-            <Link href="/repairs" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-teal-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-800 hover:bg-teal-50">
+            <Link href="/repairs" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:border-teal-300 hover:bg-slate-50">
               Open repair desk <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -48,12 +51,12 @@ export default function DashboardPage() {
             {workflow.map((step, index) => {
               const Icon = step.icon;
               return (
-                <Link key={step.label} href={step.href} className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-sm">
+                <Link key={step.label} href={step.href} className="group rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white hover:shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 group-hover:bg-teal-50 group-hover:text-teal-700">
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 group-hover:bg-teal-50 group-hover:text-teal-700 group-hover:ring-teal-100">
                       <Icon className="size-4" />
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-400">0{index + 1}</span>
+                    <span className="font-data text-[11px] font-semibold text-slate-400">0{index + 1}</span>
                   </div>
                   <p className="mt-3 text-sm font-bold text-slate-900">{step.label}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">{step.description}</p>
@@ -101,7 +104,7 @@ export default function DashboardPage() {
           </div>
           <QuickActions />
         </section>
-      </main>
+      </div>
     </AppLayout>
   );
 }
