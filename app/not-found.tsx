@@ -11,7 +11,7 @@ export default function NotFound() {
         <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-teal-700">NOVATECH Repair Suite</p>
         <h1 className="mt-3 font-heading text-3xl font-bold tracking-tight">That page isn’t here.</h1>
         <p className="mt-3 text-sm leading-7 text-slate-500">
-          The link may be outdated, or the workspace record you were looking for no longer exists.
+          The link may be outdated, or the page you requested may have moved.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
