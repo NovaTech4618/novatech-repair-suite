@@ -32,7 +32,7 @@ export default function DashboardPage() {
           </Link>
         </header>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-teal-50 to-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl">
               <div className="flex items-center gap-2">
