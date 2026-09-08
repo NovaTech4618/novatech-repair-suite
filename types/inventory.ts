@@ -14,6 +14,7 @@ export type InventoryItem = {
   supplier: string | null;
   shelf_location: string | null;
   notes: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -31,4 +32,5 @@ export type InventoryItemInput = {
   supplier: string | null;
   shelf_location: string | null;
   notes: string | null;
+  image_url?: string | null;
 };
