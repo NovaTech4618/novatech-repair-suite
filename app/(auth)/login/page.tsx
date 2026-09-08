@@ -300,7 +300,7 @@ export default function LoginPage() {
     return (
       <main className="min-h-screen bg-[#f5f7f6] px-5 py-6 text-slate-950 sm:px-8">
         <div className="mx-auto flex min-h-[92vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-35px_rgba(15,23-92,0.25)] sm:p-10">
+          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-35px_rgba(15,23,42,0.25)] sm:p-10">
             <BrandMark />
             <div className="mt-8"><p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">Account recovery</p><h1 className="mt-2 font-heading text-3xl font-bold tracking-tight">Reset your password</h1><p className="mt-3 text-sm leading-6 text-slate-500">Enter your account email and we’ll send a secure reset link.</p></div>
             {authError && <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-xs leading-5 text-red-700">{authError}</p>}
