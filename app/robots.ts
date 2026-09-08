@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = "https://novatech-repair-suite-piiy.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://novatech-repair-suite-piiy.vercel.app";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
         "/repairs/",
         "/inventory/",
         "/engineers/",
+        "/engineer-workflow/",
         "/sales/",
         "/suppliers/",
         "/invoices/",
@@ -21,6 +22,14 @@ export default function robots(): MetadataRoute.Robots {
         "/alerts/",
         "/assistant/",
         "/settings/",
+        "/finance/",
+        "/staff/",
+        "/activity/",
+        "/audit/",
+        "/search/",
+        "/tickets/",
+        "/whatsapp/",
+        "/help/",
         "/api/",
       ],
     },
