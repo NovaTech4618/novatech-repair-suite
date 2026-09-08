@@ -63,12 +63,27 @@ export const repairService = {
       .order("created_at", { ascending: false });
   },
 
+  async getAllRepairBalances() {
+    return await supabase
+      .from("repair_balance_view")
+      .select("repair_id, outstanding, paid_amount, total_amount, payment_status");
+  },
+
   async addRepair(repair: { device_id: string; technician: string | null; issue: string; diagnosis: string | null; repair_notes: string | null; solution: string | null; priority: string; deposit: number; deposit_payment_method?: string; expected_completion_date: string | null; estimated_cost: number | null; final_cost: number | null; status: string; }) {
     return await supabase.from("repairs").insert([repair]);
   },
 
   async updateRepair(id: string, repair: { technician: string | null; issue: string; diagnosis: string | null; repair_notes: string | null; solution: string | null; priority: string; deposit: number; expected_completion_date: string | null; estimated_cost: number | null; final_cost: number | null; status: string; }) {
     return await supabase.from("repairs").update(repair).eq("id", id);
+  },
+
+  async changeStatus(id: string, status: string, note?: string | null) {
+    const { data, error } = await supabase.rpc("change_repair_status", {
+      p_repair_id: id,
+      p_status: status,
+      p_note: note ?? null,
+    });
+    return { data: Array.isArray(data) ? data[0] ?? null : data, error };
   },
 
   async deleteRepair(id: string) {
