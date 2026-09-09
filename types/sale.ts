@@ -1,4 +1,4 @@
-export const PAYMENT_METHODS = ["Cash", "Card", "Transfer", "Other"] as const;
+export const PAYMENT_METHODS = ["Cash", "Transfer", "POS", "Other"] as const;
 
 export type SaleItemInput = {
   inventory_id: string;
