@@ -3,14 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, AlertTriangle, BarChart3, BellRing, Bot, Building2, ClipboardCheck, FileText, HandCoins, HelpCircle, LayoutDashboard, MessageCircle, Package, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Activity, AlertTriangle, BarChart3, BellRing, Bot, Building2, ClipboardCheck, FileText, HandCoins, HelpCircle, LayoutDashboard, LogOut, MessageCircle, Package, Search, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench, Truck } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { staffService } from "@/services/staffService";
+import { supabase } from "@/lib/supabase";
 import type { StaffRole } from "@/types/staff";
 
 const groups = [
   { label: "Front desk", items: [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { title: "Global Search", url: "/search", icon: Search },
     { title: "Repairs", url: "/repairs", icon: Wrench },
     { title: "Customers", url: "/customers", icon: Users },
     { title: "Devices", url: "/devices", icon: Smartphone },
@@ -40,7 +43,13 @@ const MANAGE_ROLES: StaffRole[] = ["owner", "branch_manager"];
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [myRole, setMyRole] = useState<StaffRole | null>(null);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   useEffect(() => {
     staffService.getMyRole().then(({ data }) => {
@@ -118,6 +127,11 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton isActive={pathname === "/help"} tooltip="Help & Support" render={<Link href="/help" />} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700">
               <HelpCircle className="size-[17px]" /><span>Help & Support</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Log out" onClick={handleLogout} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950">
+              <LogOut className="size-[17px]" /><span>Log out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

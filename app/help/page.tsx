@@ -43,10 +43,10 @@ export default function HelpPage() {
 
         <section className="grid gap-4 md:grid-cols-2">
           <Link href="/api/health" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-teal-200">
-            <div className="flex items-center gap-3"><ShieldCheck className="size-5 text-teal-700" /><div><p className="font-semibold text-slate-950">System status</p><p className="text-xs text-slate-500">Open the health endpoint.</p></div></div>
+            <div className="flex items-center gap-3"><ShieldCheck className="size-5 text-teal-700" /><div><p className="font-semibold text-slate-950">System status</p><p className="text-xs text-slate-500">Check if NOVATECH is running normally.</p></div></div>
           </Link>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-            <div className="flex items-start gap-4"><BarChart3 className="mt-0.5 size-5 text-slate-500" /><div><h2 className="font-semibold text-slate-950">Daily reporting</h2><p className="mt-1 text-sm leading-6 text-slate-600">There is no separate Daily Report page because <Link href="/reports" className="font-semibold text-teal-700 hover:underline">Reports</Link> already includes a Today view, daily profit trend and the wider business analytics.</p></div></div>
+            <div className="flex items-start gap-4"><BarChart3 className="mt-0.5 size-5 text-slate-500" /><div><h2 className="font-semibold text-slate-950">Daily reporting</h2><p className="mt-1 text-sm leading-6 text-slate-600">Your daily numbers live inside <Link href="/reports" className="font-semibold text-teal-700 hover:underline">Reports</Link> — open it for today's profit trend and the wider business analytics.</p></div></div>
           </div>
         </section>
       </div>
