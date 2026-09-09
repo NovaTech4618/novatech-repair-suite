@@ -1,0 +1,175 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Check, Loader2, Search, ShoppingBag, X } from "lucide-react";
+import { toast } from "sonner";
+
+import { inventoryService } from "@/services/inventoryService";
+import { saleService } from "@/services/saleService";
+import type { InventoryItem } from "@/types/inventory";
+import { PAYMENT_METHODS } from "@/types/sale";
+
+export default function QuickSale() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<InventoryItem | null>(null);
+  const [quantity, setQuantity] = useState("1");
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    inventoryService.getInventory().then(({ data, error }) => {
+      if (!active) return;
+      if (error) toast.error("Could not load stock for Quick Sale.");
+      setInventory(data ?? []);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const matches = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    if (!value) return [];
+    return inventory
+      .filter((item) => item.item_name.toLowerCase().includes(value) || (item.sku ?? "").toLowerCase().includes(value))
+      .slice(0, 6);
+  }, [inventory, query]);
+
+  const qty = Number(quantity);
+  const total = selected ? selected.selling_price * (Number.isInteger(qty) && qty > 0 ? qty : 0) : 0;
+
+  async function completeSale() {
+    if (!selected) {
+      toast.error("Choose the item you sold first.");
+      return;
+    }
+    if (!Number.isInteger(qty) || qty <= 0) {
+      toast.error("Enter a valid quantity.");
+      return;
+    }
+    if (qty > selected.quantity) {
+      toast.error(`Only ${selected.quantity} available in stock.`);
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await saleService.createSale({
+      customerId: null,
+      paymentMethod,
+      discount: 0,
+      staffName: null,
+      notes: "Quick sale",
+      items: [{ inventory_id: selected.id, quantity: qty, unit_price: selected.selling_price }],
+    });
+    setSaving(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success("Sale recorded");
+    setSelected(null);
+    setQuery("");
+    setQuantity("1");
+    const { data } = await inventoryService.getInventory();
+    setInventory(data ?? []);
+  }
+
+  return (
+    <section className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/80 via-white to-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white shadow-sm">
+            <ShoppingBag className="size-5" />
+          </span>
+          <div>
+            <h2 className="font-heading text-base font-bold text-slate-950">Quick Sale</h2>
+            <p className="text-xs text-slate-500">Record a walk-in sale without opening the Sales page.</p>
+          </div>
+        </div>
+        {selected && (
+          <button type="button" onClick={() => { setSelected(null); setQuery(""); }} className="inline-flex items-center gap-1 self-start text-xs font-semibold text-slate-500 hover:text-slate-900 sm:self-auto">
+            Clear <X className="size-3.5" />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px_120px_auto]">
+        <div className="relative min-w-0">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={selected?.item_name ?? query}
+            onChange={(event) => { setSelected(null); setQuery(event.target.value); }}
+            placeholder={loading ? "Loading stock…" : "Type what you sold…"}
+            disabled={loading || saving}
+            autoComplete="off"
+            enterKeyHint="search"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10"
+          />
+          {!selected && matches.length > 0 && (
+            <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+              {matches.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => { setSelected(item); setQuery(""); }}
+                  disabled={item.quantity <= 0}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-slate-900">{item.item_name}</span>
+                    <span className="text-xs text-slate-500">{item.quantity} in stock{item.sku ? ` · ${item.sku}` : ""}</span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold text-slate-700">₦{item.selling_price.toLocaleString()}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <input
+          type="number"
+          min="1"
+          step="1"
+          value={quantity}
+          onChange={(event) => setQuantity(event.target.value)}
+          disabled={!selected || saving}
+          aria-label="Quantity"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10"
+        />
+
+        <select
+          value={paymentMethod}
+          onChange={(event) => setPaymentMethod(event.target.value)}
+          disabled={saving}
+          aria-label="Payment method"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10"
+        >
+          {PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}
+        </select>
+
+        <button
+          type="button"
+          onClick={completeSale}
+          disabled={!selected || saving}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+          Sell
+        </button>
+      </div>
+
+      {selected && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/80 px-3 py-2.5 text-sm ring-1 ring-teal-100">
+          <span className="min-w-0 truncate font-medium text-slate-700">{selected.item_name} × {qty > 0 ? qty : 0}</span>
+          <span className="font-data font-bold text-slate-950">₦{total.toLocaleString()}</span>
+        </div>
+      )}
+    </section>
+  );
+}
