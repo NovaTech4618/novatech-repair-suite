@@ -39,7 +39,14 @@ export const repairOperationsService = {
     return await supabase.from("repair_intake").select("*").eq("repair_id", repairId).maybeSingle<RepairIntake>();
   },
   async saveIntake(input: Omit<RepairIntake, "id" | "created_at" | "updated_at">) {
-    return await supabase.from("repair_intake").upsert(input, { onConflict: "repair_id" }).select("*").single<RepairIntake>();
+    // Never send UI placeholder strings to timestamptz columns. The intake form
+    // uses empty strings for text inputs, but timestamps must be null or omitted.
+    const payload = {
+      ...input,
+      acknowledged_at: input.acknowledged_at || null,
+      acknowledged_by: input.acknowledged_by || null,
+    };
+    return await supabase.from("repair_intake").upsert(payload, { onConflict: "repair_id" }).select("*").single<RepairIntake>();
   },
   async getQuote(repairId: string) {
     return await supabase.from("repair_quotes").select("*").eq("repair_id", repairId).maybeSingle<RepairQuote>();
