@@ -11,7 +11,8 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 
 type InventoryTableProps = { refreshKey: number; onEdit: (item: InventoryItem) => void; itemsOverride?: InventoryItem[]; embedded?: boolean };
 
-const FALLBACK_CATEGORY = "Part";
+const FALLBACK_CATEGORY = "Accessories";
+const CATEGORY_ORDER = ["Phone Parts", "Laptop Parts", "Chargers & Power", "Displays", "Batteries", "Accessories", "Tools", "Devices"];
 
 function labelize(value: string) {
   return value.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -39,7 +40,14 @@ export default function InventoryTable({ refreshKey, onEdit, itemsOverride, embe
       const value = item.category || FALLBACK_CATEGORY;
       counts.set(value, (counts.get(value) || 0) + 1);
     });
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    return [...counts.entries()].sort((a, b) => {
+      const ai = CATEGORY_ORDER.indexOf(a[0]);
+      const bi = CATEGORY_ORDER.indexOf(b[0]);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a[0].localeCompare(b[0]);
+    });
   }, [source]);
 
   const brands = useMemo(() => {
@@ -139,13 +147,13 @@ export default function InventoryTable({ refreshKey, onEdit, itemsOverride, embe
       ) : (
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Type</TableHead><TableHead>Brand</TableHead><TableHead>Shelf</TableHead><TableHead>Stock</TableHead><TableHead>Price</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Category</TableHead><TableHead>Brand</TableHead><TableHead>Shelf</TableHead><TableHead>Stock</TableHead><TableHead>Price</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
             <TableBody>
               {filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="py-10 text-center text-slate-500">No inventory items found.</TableCell></TableRow> : filtered.map((item) => {
                 const low = item.quantity <= item.minimum_stock;
                 return <TableRow key={item.id}>
                   <TableCell><div className="flex items-center gap-3"><InventoryImage src={item.image_url} alt={item.item_name} /><div><div className="font-medium">{item.item_name}</div>{item.sku && <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>}</div></div></TableCell>
-                  <TableCell><Badge variant={String(item.category || FALLBACK_CATEGORY).toLowerCase() === "part" ? "default" : "secondary"}>{item.category || FALLBACK_CATEGORY}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary">{item.category || FALLBACK_CATEGORY}</Badge></TableCell>
                   <TableCell>{item.brand || "—"}</TableCell>
                   <TableCell>{item.shelf_location || "—"}</TableCell>
                   <TableCell><div className="flex items-center gap-2"><span className="font-semibold">{item.quantity}</span>{low && <Badge variant="destructive">{item.quantity === 0 ? "Out" : "Low"}</Badge>}</div></TableCell>
