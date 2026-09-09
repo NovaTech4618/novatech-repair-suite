@@ -4,106 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, MonitorSmartphone, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-
 import { getCurrentSession } from "@/lib/supabase";
 import AppLayout from "@/components/layout/AppLayout";
 import { deviceService } from "@/services/deviceService";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
-type DeviceRow = {
-  id: string;
-  brand: string;
-  model: string;
-  problem: string;
-  device_type?: string | null;
-  serial_number?: string | null;
-  color?: string | null;
-  customers: { full_name: string } | null;
-};
+type DeviceRow = { id: string; brand: string; model: string; problem: string; device_type?: string | null; serial_number?: string | null; color?: string | null; customers: { full_name: string } | null };
 
 export default function DevicesPage() {
-  const [devices, setDevices] = useState<DeviceRow[]>([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-
+  const [devices, setDevices] = useState<DeviceRow[]>([]); const [search, setSearch] = useState(""); const [loading, setLoading] = useState(true);
   useEffect(() => { void fetchDevices(); }, []);
-
-  async function fetchDevices() {
-    setLoading(true);
-    await getCurrentSession();
-    const { data, error } = await deviceService.getAllDevices();
-    setLoading(false);
-    if (error) { toast.error("Failed to load devices."); return; }
-    setDevices((data as unknown as DeviceRow[]) || []);
-  }
-
-  const filteredDevices = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return devices;
-    return devices.filter((device) => [device.brand, device.model, device.problem, device.device_type, device.serial_number, device.customers?.full_name]
-      .filter(Boolean).some((value) => String(value).toLowerCase().includes(query)));
-  }, [devices, search]);
-
-  return (
-    <AppLayout>
-      <main className="mx-auto w-full max-w-[1500px] space-y-5 p-5 sm:p-6 lg:p-8">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-teal-700">Repair desk</p>
-            <h1 className="mt-1 font-heading text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Devices</h1>
-            <p className="mt-1 text-sm text-slate-500">Find a customer device and continue its repair history.</p>
-          </div>
-          <Link href="/repairs" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-            <Plus className="size-4" /> New repair
-          </Link>
-        </header>
-
-        <Card className="overflow-hidden border-slate-200 shadow-sm">
-          <CardContent className="p-0">
-            <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="font-heading text-base font-semibold text-slate-950">Device directory</h2>
-                <p className="text-xs text-slate-500">Search by customer, model, IMEI/serial or reported problem.</p>
-              </div>
-              <div className="relative w-full sm:w-80">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search devices..." className="h-10 border-slate-200 pl-9" />
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="space-y-3 p-5"><div className="h-12 animate-pulse rounded-xl bg-slate-100" /><div className="h-12 animate-pulse rounded-xl bg-slate-100" /><div className="h-12 animate-pulse rounded-xl bg-slate-100" /></div>
-            ) : filteredDevices.length === 0 ? (
-              <div className="p-10 text-center">
-                <MonitorSmartphone className="mx-auto size-8 text-slate-300" />
-                <p className="mt-3 text-sm font-medium text-slate-700">{search ? "No matching devices" : "No devices yet"}</p>
-                <p className="mt-1 text-xs text-slate-500">Devices will appear here as repair jobs are created.</p>
-                {!search && <Link href="/repairs" className="mt-4 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800">Create the first repair <ArrowRight className="ml-1 size-4" /></Link>}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader><TableRow className="bg-slate-50/70"><TableHead>Device</TableHead><TableHead>Customer</TableHead><TableHead>Issue</TableHead><TableHead>IMEI / Serial</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
-                  <TableBody>
-                    {filteredDevices.map((device) => (
-                      <TableRow key={device.id} className="group">
-                        <TableCell><Link href={`/devices/${device.id}`} className="block min-w-[180px]"><span className="font-semibold text-slate-900 group-hover:text-teal-700">{device.brand} {device.model}</span><span className="mt-0.5 block text-xs text-slate-400">{device.device_type || "Device"}{device.color ? ` · ${device.color}` : ""}</span></Link></TableCell>
-                        <TableCell className="text-sm text-slate-600">{device.customers?.full_name || "Walk-in"}</TableCell>
-                        <TableCell className="max-w-[420px] text-sm text-slate-600"><span className="line-clamp-2">{device.problem || "No problem recorded"}</span></TableCell>
-                        <TableCell className="text-xs text-slate-500">{device.serial_number || "—"}</TableCell>
-                        <TableCell><Link href={`/devices/${device.id}`} aria-label={`Open ${device.brand} ${device.model}`} className="inline-flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"><ArrowRight className="size-4" /></Link></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
-    </AppLayout>
-  );
+  async function fetchDevices() { setLoading(true); await getCurrentSession(); const { data, error } = await deviceService.getAllDevices(); setLoading(false); if (error) { toast.error("Failed to load devices."); return; } setDevices((data as unknown as DeviceRow[]) || []); }
+  const filteredDevices = useMemo(() => { const query = search.trim().toLowerCase(); if (!query) return devices; return devices.filter((device) => [device.brand, device.model, device.problem, device.device_type, device.serial_number, device.customers?.full_name].filter(Boolean).some((value) => String(value).toLowerCase().includes(query))); }, [devices, search]);
+  return <AppLayout><main className="mx-auto w-full max-w-[1500px] space-y-5 p-5 sm:p-6 lg:p-8"><header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-medium text-teal-700">Repair desk</p><h1 className="mt-1 font-heading text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Devices</h1><p className="mt-1 text-sm text-slate-500">Find a customer device and continue its repair history.</p></div><Link href="/repairs/new" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"><Plus className="size-4" /> New repair</Link></header><Card className="overflow-hidden border-slate-200 shadow-sm"><CardContent className="p-0"><div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-heading text-base font-semibold text-slate-950">Device directory</h2><p className="text-xs text-slate-500">Search by customer, model, IMEI/serial or reported problem.</p></div><div className="relative w-full sm:w-80"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search devices..." className="h-10 border-slate-200 pl-9" /></div></div>{loading ? <div className="space-y-3 p-5"><div className="h-12 animate-pulse rounded-xl bg-slate-100" /><div className="h-12 animate-pulse rounded-xl bg-slate-100" /><div className="h-12 animate-pulse rounded-xl bg-slate-100" /></div> : filteredDevices.length === 0 ? <div className="p-10 text-center"><MonitorSmartphone className="mx-auto size-8 text-slate-300" /><p className="mt-3 text-sm font-medium text-slate-700">{search ? "No matching devices" : "No devices yet"}</p><p className="mt-1 text-xs text-slate-500">Devices will appear here as repair jobs are created.</p>{!search && <Link href="/repairs/new" className="mt-4 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800">Create a walk-in repair <ArrowRight className="ml-1 size-4" /></Link>}</div> : <div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-slate-50/70"><TableHead>Device</TableHead><TableHead>Customer</TableHead><TableHead>Issue</TableHead><TableHead>IMEI / Serial</TableHead><TableHead className="w-10" /></TableRow></TableHeader><TableBody>{filteredDevices.map((device) => <TableRow key={device.id} className="group"><TableCell><Link href={`/devices/${device.id}`} className="block min-w-[180px]"><span className="font-semibold text-slate-900 group-hover:text-teal-700">{device.brand} {device.model}</span><span className="mt-0.5 block text-xs text-slate-400">{device.device_type || "Device"}{device.color ? ` · ${device.color}` : ""}</span></Link></TableCell><TableCell className="text-sm text-slate-600">{device.customers?.full_name || "Walk-in"}</TableCell><TableCell className="max-w-[420px] text-sm text-slate-600"><span className="line-clamp-2">{device.problem || "No problem recorded"}</span></TableCell><TableCell className="text-xs text-slate-500">{device.serial_number || "—"}</TableCell><TableCell><Link href={`/devices/${device.id}`} aria-label={`Open ${device.brand} ${device.model}`} className="inline-flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"><ArrowRight className="size-4" /></Link></TableCell></TableRow>)}</TableBody></Table></div>}</CardContent></Card></main></AppLayout>;
 }
