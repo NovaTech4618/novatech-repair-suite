@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${manrope.variable} ${spaceMono.variable}`}>
-      <body>
+      <body className="min-w-0 overflow-x-hidden">
         <TooltipProvider>
           {children}
           <Toaster richColors position="top-right" />
