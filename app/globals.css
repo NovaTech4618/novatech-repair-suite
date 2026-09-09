@@ -62,6 +62,7 @@
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -169,7 +170,12 @@
   outline: none;
 }
 
-/* Login/form icons are aligned to the visible input, which has a top margin. */
+/* Login/form icons: reserve the leading space at the input level so the
+   text can never collide with an icon, even if Tailwind utilities change. */
+.icon + .control {
+  padding-left: 3rem !important;
+}
+
 .icon {
   pointer-events: none;
   position: absolute;
