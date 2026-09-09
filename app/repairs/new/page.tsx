@@ -7,10 +7,7 @@ import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { supabase } from "@/lib/supabase";
-import { customerService } from "@/services/customerService";
-import { deviceService } from "@/services/deviceService";
-import { repairService } from "@/services/repairService";
-import { MANUAL_REPAIR_STATUSES, REPAIR_PRIORITIES } from "@/types/repair";
+import { REPAIR_PRIORITIES } from "@/types/repair";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,34 +46,29 @@ export default function NewRepairPage() {
 
     setLoading(true);
     try {
-      const customer = await customerService.addCustomer({ full_name: customerName.trim(), phone: phone.trim(), email: null, address: null });
-      if (customer.error || !customer.data?.id) throw new Error(customer.error?.message || "Could not create customer.");
-
-      const device = await deviceService.addDevice({
-        customer_id: customer.data.id,
-        device_type: deviceType.trim() || "Phone",
-        brand: brand.trim(), model: model.trim(), serial_number: serial.trim() || null,
-        color: color.trim() || null, condition: null, accessories: null, problem: issue.trim(),
+      const { data, error } = await supabase.rpc("create_walk_in_repair", {
+        p_customer_name: customerName.trim(),
+        p_phone: phone.trim(),
+        p_device_type: deviceType.trim() || "Phone",
+        p_brand: brand.trim(),
+        p_model: model.trim(),
+        p_serial_number: serial.trim() || null,
+        p_color: color.trim() || null,
+        p_issue: issue.trim(),
+        p_technician: technician.trim() || null,
+        p_estimated_cost: estimatedCost,
+        p_deposit: paid,
+        p_payment_method: paymentMethod,
+        p_priority: priority,
+        p_expected_completion_date: expectedDate || null,
       });
-      if (device.error || !device.data?.id) throw new Error(device.error?.message || "Could not create device.");
 
-      const repair = await supabase.from("repairs").insert([{
-        device_id: device.data.id,
-        technician: technician.trim() || null,
-        issue: issue.trim(), diagnosis: null, repair_notes: null, solution: null,
-        priority, deposit: 0, expected_completion_date: expectedDate || null,
-        estimated_cost: estimatedCost, final_cost: null,
-        status: MANUAL_REPAIR_STATUSES[0],
-      }]).select("id").single();
-      if (repair.error || !repair.data?.id) throw new Error(repair.error?.message || "Could not create repair.");
-
-      if (paid > 0) {
-        const payment = await repairService.recordPayment(repair.data.id, paid, paymentMethod);
-        if (payment.error) throw new Error(`Repair was created, but the deposit could not be recorded: ${payment.error.message}`);
-      }
+      if (error) throw new Error(error.message);
+      const created = Array.isArray(data) ? data[0] : data;
+      if (!created?.repair_id) throw new Error("The repair was not returned by the database.");
 
       toast.success("Walk-in repair created successfully.");
-      window.location.href = `/repairs/${repair.data.id}`;
+      window.location.href = `/repairs/${created.repair_id}`;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not create repair.");
     } finally {
