@@ -16,8 +16,8 @@ export default function RepairStoryVideo() {
           muted
           loop
           playsInline
-          controls={false}
-          preload="auto"
+          controls
+          preload="metadata"
           poster="/logo.png"
           onError={() => setVideoFailed(true)}
           aria-label="NOVATECH repair workflow story"
@@ -25,24 +25,25 @@ export default function RepairStoryVideo() {
           <source src="/novatech-repair-story.mp4" type="video/mp4" />
         </video>
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_75%_20%,rgba(20,184,166,0.22),transparent_35%),linear-gradient(135deg,#0f172a,#111827)] p-5 sm:p-8">
-          <div className="w-full max-w-3xl">
+        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_75%_20%,rgba(20,184,166,0.22),transparent_35%),linear-gradient(135deg,#0f172a,#111827)] p-5 sm:p-8">
+          <div className="absolute -right-16 -top-16 size-48 rounded-full bg-teal-400/10 blur-3xl" />
+          <div className="relative flex h-full flex-col justify-center">
             <div className="mb-5 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 sm:mb-7">
               <span>NOVATECH repair story</span>
-              <span>Workflow</span>
+              <span>Live workflow</span>
             </div>
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5 sm:gap-3">
               {stages.map((stage, index) => (
-                <div key={stage} className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur sm:p-4">
+                <div key={stage} className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur transition-transform duration-700 motion-safe:animate-pulse sm:p-4" style={{ animationDelay: `${index * 180}ms` }}>
                   <div className="grid size-8 place-items-center rounded-full bg-teal-400/15 text-xs font-bold text-teal-300">{index + 1}</div>
                   <p className="mt-3 text-[10px] font-semibold leading-4 text-white sm:mt-4 sm:text-[11px]">{stage}</p>
                 </div>
               ))}
             </div>
             <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full w-2/5 animate-pulse rounded-full bg-teal-400" />
+              <div className="h-full w-2/5 animate-[pulse_2s_ease-in-out_infinite] rounded-full bg-teal-400" />
             </div>
-            <p className="mt-4 text-center text-xs leading-5 text-slate-400">The repair-story video will play here once the MP4 is added to the public assets.</p>
+            <p className="mt-4 text-center text-xs leading-5 text-slate-400">A responsive repair workflow preview. When the MP4 asset is available, it plays automatically here with native controls on every device.</p>
           </div>
         </div>
       )}
