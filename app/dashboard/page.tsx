@@ -7,6 +7,7 @@ import ManagementInsights from "@/components/dashboard/ManagementInsights";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import LowStock from "@/components/dashboard/LowStock";
 import QuickActions from "@/components/dashboard/QuickActions";
+import QuickSale from "@/components/dashboard/QuickSale";
 
 const workflow = [
   { label: "Customer", description: "Register the customer and their contact details.", href: "/customers", icon: UserRound },
@@ -31,6 +32,8 @@ export default function DashboardPage() {
             New repair
           </Link>
         </header>
+
+        <QuickSale />
 
         <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-teal-50 to-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
