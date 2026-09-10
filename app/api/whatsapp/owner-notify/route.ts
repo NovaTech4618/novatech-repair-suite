@@ -30,69 +30,49 @@ export async function POST(request: Request) {
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const graphVersion = process.env.WHATSAPP_GRAPH_VERSION;
 
-    if (!supabaseUrl || !publishableKey) {
-      return jsonError("Supabase server configuration is missing", 500);
-    }
-
-    if (!accessToken || !phoneNumberId || !graphVersion) {
-      return jsonError("WhatsApp Cloud API is not configured", 503);
-    }
+    if (!supabaseUrl || !publishableKey) return jsonError("Supabase server configuration is missing", 500);
+    if (!accessToken || !phoneNumberId || !graphVersion) return jsonError("WhatsApp Cloud API is not configured", 503);
 
     const supabase = createClient(supabaseUrl, publishableKey, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) return jsonError("Invalid session", 401);
 
-    const { data: companyId, error: companyIdError } = await supabase.rpc(
-      "get_my_company_id",
-    );
-    if (companyIdError || !companyId) {
-      return jsonError("Your company could not be resolved", 403);
-    }
+    const { data: companyId, error: companyIdError } = await supabase.rpc("get_my_company_id");
+    if (companyIdError || !companyId) return jsonError("Your company could not be resolved", 403);
 
     const { data: company, error: companyError } = await supabase
       .from("companies")
-      .select("id, owner_id, name, showcase_phone")
+      .select("id, owner_id, name, owner_whatsapp_phone, showcase_phone")
       .eq("id", companyId)
       .single();
 
-    if (companyError || !company) {
-      return jsonError("Company not found", 404);
-    }
+    if (companyError || !company) return jsonError("Company not found", 404);
 
-    // The destination is always the company owner's number. Staff never choose
+    // The recipient is stored as a company-owner setting. Staff never choose
     // the recipient and never receive these notifications themselves.
-    const ownerPhone = normalizeWhatsAppPhone(company.showcase_phone ?? "");
-    if (!ownerPhone) {
-      return jsonError("Boss WhatsApp number is not configured", 422);
-    }
+    const ownerPhone = normalizeWhatsAppPhone(
+      company.owner_whatsapp_phone || company.showcase_phone || "",
+    );
+    if (!ownerPhone) return jsonError("Boss WhatsApp number is not configured", 422);
 
     let message = "";
 
     if (body.type === "sale") {
       const { data: sale, error } = await supabase
         .from("sales")
-        .select(
-          "id, company_id, total, payment_method, staff_name, sale_date, customers(full_name)",
-        )
+        .select("id, company_id, total, payment_method, staff_name, sale_date, customers(full_name)")
         .eq("id", body.id)
         .eq("company_id", companyId)
         .single();
-
       if (error || !sale) return jsonError("Sale not found", 404);
 
-      const customer = Array.isArray(sale.customers)
-        ? sale.customers[0]?.full_name
-        : sale.customers?.full_name;
+      const customer = Array.isArray(sale.customers) ? sale.customers[0]?.full_name : sale.customers?.full_name;
       message = [
-        `NOVATECH — New Sale`,
+        "NOVATECH — New Sale",
         `Business: ${company.name}`,
         `Amount: ₦${Number(sale.total ?? 0).toLocaleString("en-NG")}`,
         `Customer: ${customer || "Walk-in customer"}`,
@@ -103,27 +83,17 @@ export async function POST(request: Request) {
     } else {
       const { data: repair, error } = await supabase
         .from("repairs")
-        .select(
-          "id, company_id, status, issue, technician, estimated_cost, final_cost, devices(brand, model, customers(full_name))",
-        )
+        .select("id, company_id, status, issue, technician, estimated_cost, final_cost, devices(brand, model, customers(full_name))")
         .eq("id", body.id)
         .eq("company_id", companyId)
         .single();
-
       if (error || !repair) return jsonError("Repair not found", 404);
 
-      const device = Array.isArray(repair.devices)
-        ? repair.devices[0]
-        : repair.devices;
-      const customer = Array.isArray(device?.customers)
-        ? device.customers[0]?.full_name
-        : device?.customers?.full_name;
-      const deviceName = [device?.brand, device?.model]
-        .filter(Boolean)
-        .join(" ") || "Device";
-
+      const device = Array.isArray(repair.devices) ? repair.devices[0] : repair.devices;
+      const customer = Array.isArray(device?.customers) ? device.customers[0]?.full_name : device?.customers?.full_name;
+      const deviceName = [device?.brand, device?.model].filter(Boolean).join(" ") || "Device";
       message = [
-        `NOVATECH — Repair Update`,
+        "NOVATECH — Repair Update",
         `Business: ${company.name}`,
         `Device: ${deviceName}`,
         `Customer: ${customer || "Walk-in customer"}`,
@@ -136,31 +106,22 @@ export async function POST(request: Request) {
       ].join("\n");
     }
 
-    const response = await fetch(
-      `https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: ownerPhone,
-          type: "text",
-          text: { preview_url: false, body: message },
-        }),
-      },
-    );
+    const response = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: ownerPhone,
+        type: "text",
+        text: { preview_url: false, body: message },
+      }),
+    });
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
       console.error("WhatsApp owner notification failed", result);
-      return NextResponse.json(
-        { ok: false, error: "WhatsApp provider rejected the message" },
-        { status: 502 },
-      );
+      return NextResponse.json({ ok: false, error: "WhatsApp provider rejected the message" }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true, messageId: result?.messages?.[0]?.id ?? null });
