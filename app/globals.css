@@ -4,26 +4,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* NOVATECH brand palette — Turmeric + Malt (Combo 07): warm gold/bronze
-   instead of the previous teal, paired with a deep warm-brown neutral.
-   Turmeric itself (#FFBE0B) is too light for text/button fills at
-   proper contrast, so a deepened bronze derived from it carries the
-   "primary" role; the bright gold is reserved for highlight washes. */
+/* NOVATECH brand palette — a vivid "cool tech" green, in the spirit of
+   Smart Repair Desk's crisp black-on-white-with-green-accent look
+   (their marketing pages go full black, but the actual app screens are
+   white/light with a bright green accent and near-black text - that's
+   the part worth matching here). Replaces the earlier teal and
+   gold/bronze experiments. */
 :root {
-  --novatech-primary: #8a5a00;
-  --novatech-primary-light: #b8860b;
-  --novatech-primary-dark: #5c3d00;
-  --novatech-ink: #2a2312;
-  --novatech-slate: #6b5a3a;
-  --novatech-background: #fff8e6;
-  --novatech-border: #f0dfb8;
+  --novatech-primary: #12b76a;
+  --novatech-primary-light: #34d399;
+  --novatech-primary-dark: #0b815a;
+  --novatech-ink: #0a0a0a;
+  --novatech-slate: #475569;
+  --novatech-background: #fafafa;
+  --novatech-border: #e5e7eb;
   --novatech-success: #16a34a;
   --novatech-warning: #d97706;
   --novatech-danger: #dc2626;
   --novatech-radius-sm: 10px;
   --novatech-radius-md: 14px;
   --novatech-radius-lg: 18px;
-  --novatech-shadow-card: 0 8px 24px rgba(42, 35, 18, 0.08);
+  --novatech-shadow-card: 0 8px 24px rgba(10, 10, 10, 0.06);
   --background: var(--novatech-background);
   --foreground: var(--novatech-ink);
   --card: #ffffff;
@@ -32,23 +33,23 @@
   --popover-foreground: var(--novatech-ink);
   --primary: var(--novatech-primary);
   --primary-foreground: #ffffff;
-  --secondary: #f5e9cc;
-  --secondary-foreground: #2a2312;
-  --muted: #faf3e2;
-  --muted-foreground: #6b5a3a;
-  --accent: #fff1cc;
-  --accent-foreground: var(--novatech-primary);
+  --secondary: #f1f5f4;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f4f4f5;
+  --muted-foreground: #64748b;
+  --accent: #e6f9f0;
+  --accent-foreground: var(--novatech-primary-dark);
   --destructive: var(--novatech-danger);
   --border: var(--novatech-border);
-  --input: #d9c79a;
+  --input: #d4d4d8;
   --ring: var(--novatech-primary-light);
   --radius: 0.875rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #4a3f26;
+  --sidebar-foreground: #334155;
   --sidebar-primary: var(--novatech-primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fff1cc;
-  --sidebar-accent-foreground: var(--novatech-primary);
+  --sidebar-accent: #e6f9f0;
+  --sidebar-accent-foreground: var(--novatech-primary-dark);
   --sidebar-border: var(--novatech-border);
   --sidebar-ring: var(--novatech-primary-light);
 }
@@ -56,13 +57,13 @@
 @theme inline {
   /* Same override strategy as before: repoint Tailwind's built-in
      teal-600..950 (already used across Header, AppSidebar, buttons,
-     badges) to the new gold/bronze scale instead of doing a mass
-     find-replace of class names across every component file. */
-  --color-teal-600: #b8860b;
-  --color-teal-700: #8a5a00;
-  --color-teal-800: #5c3d00;
-  --color-teal-900: #3d2900;
-  --color-teal-950: #2a2312;
+     badges) to the new green scale rather than renaming classes
+     across every component file. */
+  --color-teal-600: #12b76a;
+  --color-teal-700: #0b815a;
+  --color-teal-800: #096b4a;
+  --color-teal-900: #07543b;
+  --color-teal-950: #043526;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
