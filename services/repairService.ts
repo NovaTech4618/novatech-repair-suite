@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { notifyOwnerOnWhatsApp } from "@/lib/whatsapp";
 
 export type RepairFinancialSummary = {
   repair_id: string;
@@ -70,7 +71,11 @@ export const repairService = {
   },
 
   async addRepair(repair: { device_id: string; technician: string | null; issue: string; diagnosis: string | null; repair_notes: string | null; solution: string | null; priority: string; deposit: number; deposit_payment_method?: string; expected_completion_date: string | null; estimated_cost: number | null; final_cost: number | null; status: string; }) {
-    return await supabase.from("repairs").insert([repair]);
+    const result = await supabase.from("repairs").insert([repair]).select("id").single();
+    if (!result.error && result.data?.id) {
+      await notifyOwnerOnWhatsApp("repair", result.data.id);
+    }
+    return result;
   },
 
   async updateRepair(id: string, repair: { technician: string | null; issue: string; diagnosis: string | null; repair_notes: string | null; solution: string | null; priority: string; deposit: number; expected_completion_date: string | null; estimated_cost: number | null; final_cost: number | null; status: string; }) {
@@ -81,8 +86,6 @@ export const repairService = {
       .single<{ status: string }>();
     if (readError) return { data: null, error: readError };
 
-    // Keep ordinary repair edits compatible with the existing form, but never let a
-    // status edit bypass the database transition rules and status history.
     const { status: nextStatus, ...editableFields } = repair;
     const { data, error } = await supabase
       .from("repairs")
@@ -107,7 +110,11 @@ export const repairService = {
       p_status: status,
       p_note: note ?? null,
     });
-    return { data: Array.isArray(data) ? data[0] ?? null : data, error };
+    const result = { data: Array.isArray(data) ? data[0] ?? null : data, error };
+    if (!error) {
+      await notifyOwnerOnWhatsApp("repair", id);
+    }
+    return result;
   },
 
   async deleteRepair(id: string) {
