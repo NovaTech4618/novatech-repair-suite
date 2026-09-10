@@ -3,9 +3,6 @@ export function normalizeWhatsAppPhone(phone: string) {
   if (!digits) return "";
   if (digits.startsWith("234")) return digits;
   if (digits.startsWith("0")) return `234${digits.slice(1)}`;
-  // Handles numbers entered without the leading 0 (e.g. "8012345678"),
-  // which otherwise fell through unchanged and produced a broken wa.me
-  // link with no country code.
   if (digits.length === 10) return `234${digits}`;
   return digits;
 }
@@ -16,6 +13,33 @@ export function openWhatsApp(phone: string, message: string) {
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank", "noopener,noreferrer");
   return true;
+}
+
+export async function notifyOwnerOnWhatsApp(type: "sale" | "repair", id: string) {
+  try {
+    const { getCurrentSession } = await import("@/lib/supabase");
+    const session = await getCurrentSession();
+    if (!session?.access_token) return { ok: false, error: "Not authenticated" };
+
+    const response = await fetch("/api/whatsapp/owner-notify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ type, id }),
+    });
+
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      return { ok: false, error: result?.error || "WhatsApp notification failed" };
+    }
+
+    return { ok: true, messageId: result?.messageId ?? null };
+  } catch (error) {
+    console.error("Owner WhatsApp notification error", error);
+    return { ok: false, error: "WhatsApp notification failed" };
+  }
 }
 
 export function customerBalanceMessage(name: string, balance: number) {
