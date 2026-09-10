@@ -4,25 +4,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* NOVATECH brand palette — Cyprus + Sand (Combo 04), a deeper, warmer
-   evolution of the original teal identity: same hue family as the
-   previous #0f766e, just richer and paired with a warm neutral instead
-   of a cold gray-white. */
+/* NOVATECH brand palette — Turmeric + Malt (Combo 07): warm gold/bronze
+   instead of the previous teal, paired with a deep warm-brown neutral.
+   Turmeric itself (#FFBE0B) is too light for text/button fills at
+   proper contrast, so a deepened bronze derived from it carries the
+   "primary" role; the bright gold is reserved for highlight washes. */
 :root {
-  --novatech-primary: #004741;
-  --novatech-primary-light: #0e6b5f;
-  --novatech-primary-dark: #00302b;
-  --novatech-ink: #0f172a;
-  --novatech-slate: #475569;
-  --novatech-background: #f0ede4;
-  --novatech-border: #e3ddcd;
+  --novatech-primary: #8a5a00;
+  --novatech-primary-light: #b8860b;
+  --novatech-primary-dark: #5c3d00;
+  --novatech-ink: #2a2312;
+  --novatech-slate: #6b5a3a;
+  --novatech-background: #fff8e6;
+  --novatech-border: #f0dfb8;
   --novatech-success: #16a34a;
   --novatech-warning: #d97706;
   --novatech-danger: #dc2626;
   --novatech-radius-sm: 10px;
   --novatech-radius-md: 14px;
   --novatech-radius-lg: 18px;
-  --novatech-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --novatech-shadow-card: 0 8px 24px rgba(42, 35, 18, 0.08);
   --background: var(--novatech-background);
   --foreground: var(--novatech-ink);
   --card: #ffffff;
@@ -31,39 +32,37 @@
   --popover-foreground: var(--novatech-ink);
   --primary: var(--novatech-primary);
   --primary-foreground: #ffffff;
-  --secondary: #eae4d6;
-  --secondary-foreground: #1e293b;
-  --muted: #f3efe6;
-  --muted-foreground: #64748b;
-  --accent: #dceeea;
+  --secondary: #f5e9cc;
+  --secondary-foreground: #2a2312;
+  --muted: #faf3e2;
+  --muted-foreground: #6b5a3a;
+  --accent: #fff1cc;
   --accent-foreground: var(--novatech-primary);
   --destructive: var(--novatech-danger);
   --border: var(--novatech-border);
-  --input: #cbd5e1;
+  --input: #d9c79a;
   --ring: var(--novatech-primary-light);
   --radius: 0.875rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #334155;
+  --sidebar-foreground: #4a3f26;
   --sidebar-primary: var(--novatech-primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dceeea;
+  --sidebar-accent: #fff1cc;
   --sidebar-accent-foreground: var(--novatech-primary);
   --sidebar-border: var(--novatech-border);
   --sidebar-ring: var(--novatech-primary-light);
 }
 
 @theme inline {
-  /* Override Tailwind's built-in teal-600..950 so every existing
-     bg-teal-*/text-teal-* utility across the app (sidebar active states,
-     buttons, badges) renders through Cyprus instead of stock Tailwind
-     teal, without needing to touch every component file individually.
-     50-500 are left as Tailwind's stock teal - same hue family, and
-     those lighter washes didn't need to change. */
-  --color-teal-600: #0b5c52;
-  --color-teal-700: #004741;
-  --color-teal-800: #00332f;
-  --color-teal-900: #00211e;
-  --color-teal-950: #001411;
+  /* Same override strategy as before: repoint Tailwind's built-in
+     teal-600..950 (already used across Header, AppSidebar, buttons,
+     badges) to the new gold/bronze scale instead of doing a mass
+     find-replace of class names across every component file. */
+  --color-teal-600: #b8860b;
+  --color-teal-700: #8a5a00;
+  --color-teal-800: #5c3d00;
+  --color-teal-900: #3d2900;
+  --color-teal-950: #2a2312;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
