@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, Phone, Wrench } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import NovatechLogo from "@/components/brand/NovatechLogo";
+import { NovatechLogo } from "@/components/brand/NovatechLogo";
 
 type Company = {
   name: string;
