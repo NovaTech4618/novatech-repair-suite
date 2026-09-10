@@ -124,6 +124,37 @@
   overflow: hidden;
 }
 
+/* NOVATECH design primitives: inspired by modern gradient, motion, shadow,
+   neumorphic and geometric-wave references without copying any source. */
+.nova-gradient-text {
+  background: linear-gradient(110deg, #0f766e 0%, #14b8a6 48%, #0f172a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nova-gradient-border {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(135deg, rgba(20,184,166,.5), rgba(15,23,42,.08), rgba(20,184,166,.18)) border-box;
+}
+
+.nova-soft-shadow { box-shadow: 10px 10px 24px rgba(15,23,42,.07), -8px -8px 22px rgba(255,255,255,.9); }
+.nova-lift { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.nova-lift:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,.10); }
+.nova-fade-up { animation: nova-fade-up 600ms cubic-bezier(.22,1,.36,1) both; }
+.nova-delay-1 { animation-delay: 80ms; }
+.nova-delay-2 { animation-delay: 160ms; }
+.nova-delay-3 { animation-delay: 240ms; }
+.nova-wave { clip-path: ellipse(90% 72% at 50% 28%); }
+
+@keyframes nova-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .control {
   width: 100%;
   min-width: 0;
@@ -140,7 +171,6 @@
 .control:hover { border-color: #c4ced6; }
 .control:focus { border-color: #2dd4bf; background: #fff; box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12); outline: none; }
 
-/* Reserve leading space at the input itself. This is safer than relying only on a utility class. */
 .icon + .control { padding-left: 3rem !important; }
 .icon { pointer-events: none; position: absolute; left: 0.9rem; top: calc(50% + 0.25rem); width: 1rem; height: 1rem; transform: translateY(-50%); color: #94a3b8; z-index: 1; }
 button[aria-label="Show password"],
