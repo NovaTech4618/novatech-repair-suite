@@ -3,23 +3,106 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, AlertTriangle, BarChart3, BellRing, Bot, Building2, ClipboardCheck, FileText, Globe2, HandCoins, HelpCircle, LayoutDashboard, LogOut, MessageCircle, Package, Search, Settings, ShieldCheck, ShoppingCart, Smartphone, UserCog, Users, WalletCards, Wrench, Truck } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  BellRing,
+  Bot,
+  Building2,
+  ClipboardCheck,
+  FileText,
+  Globe2,
+  HandCoins,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  MessageCircle,
+  Package,
+  Search,
+  Settings,
+  ShieldCheck,
+  ShoppingCart,
+  Smartphone,
+  UserCog,
+  Users,
+  WalletCards,
+  Wrench,
+  Truck,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import { staffService } from "@/services/staffService";
 import { supabase } from "@/lib/supabase";
 import type { StaffRole } from "@/types/staff";
 
-const groups = [
-  { label: "Front desk", items: [{ title: "Dashboard", url: "/dashboard", icon: LayoutDashboard }, { title: "Global Search", url: "/search", icon: Search }, { title: "Repairs", url: "/repairs", icon: Wrench }, { title: "Customers", url: "/customers", icon: Users }, { title: "Devices", url: "/devices", icon: Smartphone }, { title: "Sales", url: "/sales", icon: ShoppingCart }] },
-  { label: "Workshop", items: [{ title: "Inventory", url: "/inventory", icon: Package }, { title: "Suppliers & Payables", url: "/inventory/purchases", icon: Truck }, { title: "Engineer workflow", url: "/engineer-workflow", icon: UserCog }, { title: "Parts ledger", url: "/technician-ledger", icon: ClipboardCheck }] },
-  { label: "Billing", items: [{ title: "Invoices", url: "/invoices", icon: FileText }, { title: "Outstanding", url: "/outstanding", icon: HandCoins }, { title: "Finance", url: "/finance", icon: WalletCards }] },
-  { label: "Communication", items: [{ title: "WhatsApp Center", url: "/whatsapp", icon: MessageCircle }] },
-  { label: "Insights", items: [{ title: "Reports", url: "/reports", icon: BarChart3 }, { title: "Assistant", url: "/assistant", icon: Bot }] },
+type Icon = typeof LayoutDashboard;
+type NavItem = { title: string; url: string; icon: Icon };
+type NavGroup = { label: string; items: NavItem[] };
+
+const groups: NavGroup[] = [
+  {
+    label: "Front desk",
+    items: [
+      { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+      { title: "Global Search", url: "/search", icon: Search },
+      { title: "Repairs", url: "/repairs", icon: Wrench },
+      { title: "Customers", url: "/customers", icon: Users },
+      { title: "Devices", url: "/devices", icon: Smartphone },
+      { title: "Sales", url: "/sales", icon: ShoppingCart },
+    ],
+  },
+  {
+    label: "Workshop",
+    items: [
+      { title: "Inventory", url: "/inventory", icon: Package },
+      { title: "Suppliers & Payables", url: "/inventory/purchases", icon: Truck },
+      { title: "Engineer workflow", url: "/engineer-workflow", icon: UserCog },
+      { title: "Parts ledger", url: "/technician-ledger", icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: "Billing",
+    items: [
+      { title: "Invoices", url: "/invoices", icon: FileText },
+      { title: "Outstanding", url: "/outstanding", icon: HandCoins },
+      { title: "Finance", url: "/finance", icon: WalletCards },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [{ title: "WhatsApp Center", url: "/whatsapp", icon: MessageCircle }],
+  },
+  {
+    label: "Insights",
+    items: [
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "Assistant", url: "/assistant", icon: Bot },
+    ],
+  },
 ];
 
-const MANAGE_ROLES: StaffRole[] = ["owner", "branch_manager"];
+const moreItems: NavItem[] = [
+  { title: "Activity", url: "/activity", icon: Activity },
+  { title: "Alerts", url: "/alerts", icon: AlertTriangle },
+  { title: "Customer Requests", url: "/customer-requests", icon: BellRing },
+];
 
-type NavItem = { title: string; url: string; icon: typeof LayoutDashboard };
+const manageRoles: StaffRole[] = ["owner", "branch_manager"];
+
+function menuButtonClass() {
+  return "h-9 rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:font-semibold data-[active=true]:text-teal-700";
+}
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -27,7 +110,13 @@ export default function AppSidebar() {
   const [myRole, setMyRole] = useState<StaffRole | null>(null);
 
   useEffect(() => {
-    staffService.getMyRole().then(({ data }) => { if (data) setMyRole(data); });
+    let active = true;
+    void staffService.getMyRole().then(({ data }) => {
+      if (active && data) setMyRole(data);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function handleLogout() {
@@ -36,10 +125,18 @@ export default function AppSidebar() {
   }
 
   function renderItem(item: NavItem) {
-    const active = pathname === item.url || (item.url !== "/dashboard" && pathname.startsWith(`${item.url}/`));
+    const active =
+      pathname === item.url ||
+      (item.url !== "/dashboard" && pathname.startsWith(`${item.url}/`));
+
     return (
       <SidebarMenuItem key={item.url}>
-        <SidebarMenuButton isActive={active} tooltip={item.title} render={<Link href={item.url} />} className="h-9 rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:font-semibold data-[active=true]:text-teal-700">
+        <SidebarMenuButton
+          isActive={active}
+          tooltip={item.title}
+          render={<Link href={item.url} />}
+          className={menuButtonClass()}
+        >
           <item.icon className="size-[17px]" />
           <span>{item.title}</span>
         </SidebarMenuButton>
@@ -47,51 +144,124 @@ export default function AppSidebar() {
     );
   }
 
-  const canManageStaff = myRole ? MANAGE_ROLES.includes(myRole) : false;
+  const canManageStaff = myRole !== null && manageRoles.includes(myRole);
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 font-heading font-bold text-white">N</div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 font-heading font-bold text-white">
+            N
+          </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="font-heading text-base font-bold tracking-tight text-slate-950">Novatech</span>
-            <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">Repair Suite</span>
+            <span className="font-heading text-base font-bold tracking-tight text-slate-950">
+              Novatech
+            </span>
+            <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
+              Repair Suite
+            </span>
           </div>
         </div>
       </SidebarHeader>
+
       <SidebarContent>
         {groups.map((group) => (
           <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{group.label}</SidebarGroupLabel>
-            <SidebarGroupContent><SidebarMenu>{group.items.map(renderItem)}</SidebarMenu></SidebarGroupContent>
+            <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
         <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">More</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            More
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {[
-                { title: "Activity", url: "/activity", icon: Activity },
-                { title: "Alerts", url: "/alerts", icon: AlertTriangle },
-                { title: "Customer Requests", url: "/customer-requests", icon: BellRing },
-              ].map(renderItem)}
-            </SidebarMenu>
+            <SidebarMenu>{moreItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
           {canManageStaff && (
             <>
-              <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/staff"} tooltip="Staff & Branches" render={<Link href="/staff" />} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><Building2 className="size-[17px]" /><span>Staff & Branches</span></SidebarMenuButton></SidebarMenuItem>
-              <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/settings/showcase"} tooltip="Public Showcase" render={<Link href="/settings/showcase" />} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><Globe2 className="size-[17px]" /><span>Public Showcase</span></SidebarMenuButton></SidebarMenuItem>
-              <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/audit"} tooltip="Audit Log" render={<Link href="/audit" />} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><ShieldCheck className="size-[17px]" /><span>Audit Log</span></SidebarMenuButton></SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/staff"}
+                  tooltip="Staff & Branches"
+                  render={<Link href="/staff" />}
+                  className={menuButtonClass()}
+                >
+                  <Building2 className="size-[17px]" />
+                  <span>Staff & Branches</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/settings/showcase"}
+                  tooltip="Public Showcase"
+                  render={<Link href="/settings/showcase" />}
+                  className={menuButtonClass()}
+                >
+                  <Globe2 className="size-[17px]" />
+                  <span>Public Showcase</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/audit"}
+                  tooltip="Audit Log"
+                  render={<Link href="/audit" />}
+                  className={menuButtonClass()}
+                >
+                  <ShieldCheck className="size-[17px]" />
+                  <span>Audit Log</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </>
           )}
-          <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/settings"} tooltip="Settings" render={<Link href="/settings" />} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><Settings className="size-[17px]" /><span>Settings</span></SidebarMenuButton></SidebarMenuItem>
-          <SidebarMenuItem><SidebarMenuButton isActive={pathname === "/help"} tooltip="Help & Support" render={<Link href="/help" />} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:text-teal-700"><HelpCircle className="size-[17px]" /><span>Help & Support</span></SidebarMenuButton></SidebarMenuItem>
-          <SidebarMenuItem><SidebarMenuButton tooltip="Log out" onClick={handleLogout} className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950"><LogOut className="size-[17px]" /><span>Log out</span></SidebarMenuButton></SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={pathname === "/settings"}
+              tooltip="Settings"
+              render={<Link href="/settings" />}
+              className={menuButtonClass()}
+            >
+              <Settings className="size-[17px]" />
+              <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={pathname === "/help"}
+              tooltip="Help & Support"
+              render={<Link href="/help" />}
+              className={menuButtonClass()}
+            >
+              <HelpCircle className="size-[17px]" />
+              <span>Help & Support</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Log out"
+              onClick={handleLogout}
+              className={menuButtonClass()}
+            >
+              <LogOut className="size-[17px]" />
+              <span>Log out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
