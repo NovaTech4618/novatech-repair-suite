@@ -50,6 +50,13 @@ type Icon = typeof LayoutDashboard;
 type NavItem = { title: string; url: string; icon: Icon };
 type NavGroup = { label: string; items: NavItem[] };
 
+// Consolidated from 5 groups + a flat "more" list (14 + 3 items, 8 top-level
+// buckets) down to 4 purposeful groups. Nothing was removed - every page is
+// still one click away - this just matches the sidebar to how a repair shop
+// actually thinks: front desk work, workshop work, money, and customer
+// contact. Monitoring/admin tools (Activity, Alerts) moved to the footer
+// alongside Audit Log, where they belong conceptually and get out of the
+// way of daily front-desk tasks.
 const groups: NavGroup[] = [
   {
     label: "Front desk",
@@ -72,30 +79,22 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    label: "Billing",
+    label: "Money",
     items: [
       { title: "Invoices", url: "/invoices", icon: FileText },
       { title: "Outstanding", url: "/outstanding", icon: HandCoins },
       { title: "Finance", url: "/finance", icon: WalletCards },
+      { title: "Reports", url: "/reports", icon: BarChart3 },
     ],
   },
   {
-    label: "Communication",
-    items: [{ title: "WhatsApp Center", url: "/whatsapp", icon: MessageCircle }],
-  },
-  {
-    label: "Insights",
+    label: "Customers & AI",
     items: [
-      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "WhatsApp Center", url: "/whatsapp", icon: MessageCircle },
+      { title: "Customer Requests", url: "/customer-requests", icon: BellRing },
       { title: "Assistant", url: "/assistant", icon: Bot },
     ],
   },
-];
-
-const moreItems: NavItem[] = [
-  { title: "Activity", url: "/activity", icon: Activity },
-  { title: "Alerts", url: "/alerts", icon: AlertTriangle },
-  { title: "Customer Requests", url: "/customer-requests", icon: BellRing },
 ];
 
 const manageRoles: StaffRole[] = ["owner", "branch_manager"];
@@ -175,19 +174,34 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-            More
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{moreItems.map(renderItem)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={pathname === "/activity"}
+              tooltip="Activity"
+              render={<Link href="/activity" />}
+              className={menuButtonClass()}
+            >
+              <Activity className="size-[17px]" />
+              <span>Activity</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={pathname === "/alerts"}
+              tooltip="Alerts"
+              render={<Link href="/alerts" />}
+              className={menuButtonClass()}
+            >
+              <AlertTriangle className="size-[17px]" />
+              <span>Alerts</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           {canManageStaff && (
             <>
               <SidebarMenuItem>
