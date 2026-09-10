@@ -50,13 +50,6 @@ type Icon = typeof LayoutDashboard;
 type NavItem = { title: string; url: string; icon: Icon };
 type NavGroup = { label: string; items: NavItem[] };
 
-// Consolidated from 5 groups + a flat "more" list (14 + 3 items, 8 top-level
-// buckets) down to 4 purposeful groups. Nothing was removed - every page is
-// still one click away - this just matches the sidebar to how a repair shop
-// actually thinks: front desk work, workshop work, money, and customer
-// contact. Monitoring/admin tools (Activity, Alerts) moved to the footer
-// alongside Audit Log, where they belong conceptually and get out of the
-// way of daily front-desk tasks.
 const groups: NavGroup[] = [
   {
     label: "Front desk",
@@ -100,7 +93,7 @@ const groups: NavGroup[] = [
 const manageRoles: StaffRole[] = ["owner", "branch_manager"];
 
 function menuButtonClass() {
-  return "h-9 rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 data-[active=true]:bg-teal-50 data-[active=true]:font-semibold data-[active=true]:text-teal-700";
+  return "h-9 rounded-xl border border-transparent text-slate-300 transition-all duration-150 hover:border-white/5 hover:bg-white/[0.055] hover:text-white data-[active=true]:border-[#21F1A8]/15 data-[active=true]:bg-[#21F1A8]/10 data-[active=true]:font-semibold data-[active=true]:text-[#21F1A8] data-[active=true]:shadow-[inset_2px_0_0_#21F1A8]";
 }
 
 export default function AppSidebar() {
@@ -146,27 +139,30 @@ export default function AppSidebar() {
   const canManageStaff = myRole !== null && manageRoles.includes(myRole);
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-3 px-2 py-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 font-heading font-bold text-white">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-white/[0.07] bg-[#111111] text-slate-200"
+    >
+      <SidebarHeader className="border-b border-white/[0.06] bg-[#111111] px-3 py-3">
+        <div className="flex items-center gap-3 px-1 py-1">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#21F1A8] font-heading text-sm font-black text-[#07130f] shadow-[0_0_24px_rgba(33,241,168,0.16)]">
             N
           </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="font-heading text-base font-bold tracking-tight text-slate-950">
+            <span className="font-heading text-base font-bold tracking-tight text-white">
               Novatech
             </span>
-            <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
+            <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500">
               Repair Suite
             </span>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-[#111111] px-2 py-2">
         {groups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <SidebarGroup key={group.label} className="p-1.5">
+            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.17em] text-slate-600 group-data-[collapsible=icon]:px-0">
               {group.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -176,7 +172,7 @@ export default function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-white/[0.06] bg-[#111111] p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
