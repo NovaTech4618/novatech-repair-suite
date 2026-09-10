@@ -21,17 +21,11 @@ export default function ShowcasePage({ params }: { params: Promise<{ slug: strin
   useEffect(() => {
     let active = true;
     void params.then(({ slug }) => {
-      supabase
-        .from("companies")
-        .select("name, logo_url, showcase_description, showcase_phone, showcase_address, showcase_services")
-        .eq("slug", slug)
-        .eq("showcase_enabled", true)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (!active) return;
-          setCompany((data as Company | null) ?? null);
-          setLoading(false);
-        });
+      supabase.rpc("get_public_company_showcase", { p_slug: slug }).maybeSingle().then(({ data }) => {
+        if (!active) return;
+        setCompany((data as Company | null) ?? null);
+        setLoading(false);
+      });
     });
     return () => { active = false; };
   }, [params]);
