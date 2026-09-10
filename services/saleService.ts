@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { notifyOwnerOnWhatsApp } from "@/lib/whatsapp";
 import type { SaleItemInput } from "@/types/sale";
 
 export const saleService = {
@@ -25,7 +26,7 @@ export const saleService = {
     notes: string | null;
     items: SaleItemInput[];
   }) {
-    return await supabase.rpc("create_sale", {
+    const result = await supabase.rpc("create_sale", {
       p_customer_id: params.customerId,
       p_payment_method: params.paymentMethod,
       p_discount: params.discount,
@@ -33,5 +34,14 @@ export const saleService = {
       p_notes: params.notes,
       p_items: params.items,
     });
+
+    if (!result.error && result.data) {
+      const saleId = Array.isArray(result.data) ? result.data[0]?.id : result.data?.id;
+      if (saleId) {
+        await notifyOwnerOnWhatsApp("sale", saleId);
+      }
+    }
+
+    return result;
   },
 };
