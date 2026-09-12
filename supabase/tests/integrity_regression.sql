@@ -46,6 +46,25 @@ BEGIN
 END $$;
 
 DO $$
+DECLARE
+  v_view text;
+  v_options text[];
+BEGIN
+  FOREACH v_view IN ARRAY ARRAY['repair_balance_view','repair_invoice_view','sale_receipt_view'] LOOP
+    SELECT c.reloptions INTO v_options
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND c.relname=v_view AND c.relkind='v';
+    IF v_options IS NULL OR NOT ('security_invoker=true' = ANY(v_options)) THEN
+      RAISE EXCEPTION 'View security regression: public.% must use security_invoker=true', v_view;
+    END IF;
+    IF has_table_privilege('anon', 'public.' || v_view, 'SELECT') THEN
+      RAISE EXCEPTION 'View security regression: anon can SELECT public.%', v_view;
+    END IF;
+  END LOOP;
+END $$;
+
+DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'financial_transactions_amount_positive') THEN
     RAISE EXCEPTION 'Missing financial_transactions_amount_positive constraint';
