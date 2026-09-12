@@ -18,6 +18,24 @@ function boundedText(value: string, max: number) {
   return value.length <= max ? value : `${value.slice(0, max)}\n[context truncated]`;
 }
 
+export async function checkPremiumAccess(accessToken: string): Promise<{ ok: boolean; premium: boolean }> {
+  if (!accessToken) return { ok: false, premium: false };
+  try {
+    const supabase = clientForToken(accessToken);
+    const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+    if (userError || !userData.user) return { ok: false, premium: false };
+    const { data, error } = await supabase.rpc("has_premium_access");
+    if (error) {
+      console.error("Premium access check error", error);
+      return { ok: false, premium: false };
+    }
+    return { ok: true, premium: data === true };
+  } catch (error) {
+    console.error("Premium access check failed", error);
+    return { ok: false, premium: false };
+  }
+}
+
 export async function getPremiumConversation(accessToken: string, conversationId?: string): Promise<{ ok: boolean; messages: PremiumConversationMessage[] }> {
   if (!accessToken || !conversationId) return { ok: true, messages: [] };
   const supabase = clientForToken(accessToken);
