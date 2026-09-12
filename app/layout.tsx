@@ -18,8 +18,9 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://novatech-repair-sui
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "NOVATECH Repair Suite", template: "%s · NOVATECH" },
-  description: "Repair-shop management for customers, devices, repairs, inventory, sales, payments and business finances.",
+  title: { default: "NOVATECH Repair Suite — Repair Shop Management Software", template: "%s · NOVATECH" },
+  description:
+    "NOVATECH is a cloud-based repair shop management software platform: one app for customers, devices, repairs, inventory, engineers, sales, payments and business reporting.",
   applicationName: "NOVATECH Repair Suite",
   category: "business",
   verification: { google: "R-XIxwDQvgCpCjwnRcuj9kkfDgnP1TZ4NtDuBDNAQy8" },
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f766e",
+  themeColor: "#12b76a",
   width: "device-width",
   initialScale: 1,
 };

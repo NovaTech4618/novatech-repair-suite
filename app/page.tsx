@@ -6,14 +6,36 @@ import { NovatechLogo } from "@/components/brand/NovatechLogo";
 export const metadata: Metadata = {
   title: "Repair Shop Management Software | NOVATECH",
   description:
-    "NOVATECH gives repair shops one calm workspace for repairs, customers, inventory, engineers, payments and day-to-day operations.",
+    "NOVATECH is a cloud-based software platform that gives repair shops one calm workspace for repairs, customers, inventory, engineers, payments and day-to-day operations.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
-    title: "NOVATECH Repair Suite",
+    title: "NOVATECH Repair Suite — Repair Shop Management Software",
     description: "Run the repair shop without the notebook-and-WhatsApp chaos.",
     type: "website",
     siteName: "NOVATECH Repair Suite",
+  },
+};
+
+// Explicit machine-readable signal for search engines / AI overviews that
+// this is a software product, not a services/support company - Google's
+// AI Overview was describing "Novatech" as a generic IT/hardware support
+// business rather than this app, most likely due to name collision with
+// an unrelated company. This won't override an existing brand collision
+// on its own, but it's the standard, correct fix on our side: an
+// unambiguous SoftwareApplication schema pointing at this exact product.
+const softwareAppJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "NOVATECH Repair Suite",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "NOVATECH Repair Suite is a cloud-based repair shop management software platform covering customers, devices, repairs, inventory, engineers, sales, payments and business reporting.",
+  url: "https://novatech-repair-suite-piiy.vercel.app",
+  offers: {
+    "@type": "Offer",
+    category: "SaaS subscription",
   },
 };
 
@@ -32,6 +54,10 @@ const outcomes = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f7f9f8] text-slate-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }}
+      />
       <nav className="sticky top-0 z-30 border-b border-slate-200/80 bg-[#f7f9f8]/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
           <Link href="/" aria-label="NOVATECH home" className="shrink-0">
