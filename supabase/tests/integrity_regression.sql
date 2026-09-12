@@ -33,7 +33,6 @@ BEGIN
   END LOOP;
 END $$;
 
--- Authorization-boundary objects must remain present.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='profiles' AND t.tgname='prevent_profile_authorization_escalation' AND NOT t.tgisinternal) THEN
@@ -44,7 +43,6 @@ BEGIN
   IF has_function_privilege('authenticated','public.write_audit_log(text,text,uuid,jsonb,jsonb,jsonb)','EXECUTE') THEN RAISE EXCEPTION 'write_audit_log must not be directly executable by authenticated users'; END IF;
 END $$;
 
--- Workflow writes must not be bypassable through direct Data API inserts/updates.
 DO $$
 BEGIN
   IF has_table_privilege('authenticated','public.repair_parts_usage','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT repair_parts_usage'; END IF;
@@ -63,6 +61,47 @@ BEGIN
   IF has_function_privilege('anon','public.record_repair_part_usage(uuid,uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'record_repair_part_usage must not be executable by anon'; END IF;
   IF NOT has_function_privilege('authenticated','public.return_repair_part_usage(uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'return_repair_part_usage is not executable by authenticated users'; END IF;
   IF has_function_privilege('anon','public.return_repair_part_usage(uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'return_repair_part_usage must not be executable by anon'; END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT has_function_privilege('authenticated','public.engineer_parts_out(uuid,uuid,integer,numeric,text)','EXECUTE') OR has_function_privilege('anon','public.engineer_parts_out(uuid,uuid,integer,numeric,text)','EXECUTE') THEN RAISE EXCEPTION 'Engineer parts-out RPC execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.engineer_parts_in(uuid,uuid,integer,numeric,text)','EXECUTE') OR has_function_privilege('anon','public.engineer_parts_in(uuid,uuid,integer,numeric,text)','EXECUTE') THEN RAISE EXCEPTION 'Engineer parts-in RPC execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.engineer_payment_in(uuid,numeric,text,text)','EXECUTE') OR has_function_privilege('anon','public.engineer_payment_in(uuid,numeric,text,text)','EXECUTE') THEN RAISE EXCEPTION 'Engineer payment-in RPC execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.engineer_payment_out(uuid,numeric,text,text)','EXECUTE') OR has_function_privilege('anon','public.engineer_payment_out(uuid,numeric,text,text)','EXECUTE') THEN RAISE EXCEPTION 'Engineer payment-out RPC execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.engineer_opening_balance(uuid,numeric,text)','EXECUTE') OR has_function_privilege('anon','public.engineer_opening_balance(uuid,numeric,text)','EXECUTE') THEN RAISE EXCEPTION 'Engineer opening-balance RPC execute boundary regression'; END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT has_function_privilege('authenticated','public.create_invoice(text,uuid,uuid,uuid,numeric,numeric,numeric,timestamptz,text)','EXECUTE') OR has_function_privilege('anon','public.create_invoice(text,uuid,uuid,uuid,numeric,numeric,numeric,timestamptz,text)','EXECUTE') THEN RAISE EXCEPTION 'create_invoice execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.create_invoice_with_item(text,uuid,uuid,uuid,numeric,numeric,numeric,timestamptz,text,text,numeric,numeric)','EXECUTE') OR has_function_privilege('anon','public.create_invoice_with_item(text,uuid,uuid,uuid,numeric,numeric,numeric,timestamptz,text,text,numeric,numeric)','EXECUTE') THEN RAISE EXCEPTION 'create_invoice_with_item execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.add_invoice_item(uuid,text,numeric,numeric)','EXECUTE') OR has_function_privilege('anon','public.add_invoice_item(uuid,text,numeric,numeric)','EXECUTE') THEN RAISE EXCEPTION 'add_invoice_item execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.record_invoice_payment(uuid,numeric,text,text,uuid)','EXECUTE') OR has_function_privilege('anon','public.record_invoice_payment(uuid,numeric,text,text,uuid)','EXECUTE') THEN RAISE EXCEPTION 'record_invoice_payment execute boundary regression'; END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT has_function_privilege('authenticated','public.accept_staff_invitation()','EXECUTE') OR has_function_privilege('anon','public.accept_staff_invitation()','EXECUTE') THEN RAISE EXCEPTION 'accept_staff_invitation execute boundary regression'; END IF;
+  IF NOT has_function_privilege('authenticated','public.global_search(text,integer)','EXECUTE') OR has_function_privilege('anon','public.global_search(text,integer)','EXECUTE') THEN RAISE EXCEPTION 'global_search execute boundary regression'; END IF;
+  IF EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='global_search' AND p.prosecdef) THEN RAISE EXCEPTION 'global_search must remain SECURITY INVOKER'; END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='branches' AND policyname='branches_insert' AND with_check LIKE '%is_manager_or_owner%') THEN RAISE EXCEPTION 'Branch-management policy regression: branches_insert missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='branches' AND policyname='branches_delete' AND qual LIKE '%is_company_owner%') THEN RAISE EXCEPTION 'Branch-management policy regression: branches_delete missing owner guard'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='user_branches' AND policyname='user_branches_owner_insert' AND with_check LIKE '%is_company_owner%') THEN RAISE EXCEPTION 'Branch-membership regression: owner insert policy missing'; END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname='customers' AND relrowsecurity) THEN RAISE EXCEPTION 'Search boundary regression: customers RLS missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname='devices' AND relrowsecurity) THEN RAISE EXCEPTION 'Search boundary regression: devices RLS missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname='repairs' AND relrowsecurity) THEN RAISE EXCEPTION 'Search boundary regression: repairs RLS missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname='inventory' AND relrowsecurity) THEN RAISE EXCEPTION 'Search boundary regression: inventory RLS missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname='invoices' AND relrowsecurity) THEN RAISE EXCEPTION 'Search boundary regression: invoices RLS missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname='inventory_purchases' AND relrowsecurity) THEN RAISE EXCEPTION 'Search boundary regression: inventory_purchases RLS missing'; END IF;
 END $$;
 
 DO $$
