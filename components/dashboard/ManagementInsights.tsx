@@ -139,7 +139,7 @@ export default function ManagementInsights() {
           </div>
 
           <div className="mt-5 overflow-x-auto pb-1">
-            <div className={`relative flex min-w-[${range === 30 ? "720px" : "0px"}] h-52 items-stretch gap-1 sm:gap-2`}>
+            <div className={`relative flex h-52 items-stretch gap-1 sm:gap-2 ${range === 30 ? "min-w-[720px]" : "min-w-0"}`}>
               <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-slate-200" aria-hidden="true" />
               {chartData.map((item) => {
                 const value = Number(item.net_profit || 0);
