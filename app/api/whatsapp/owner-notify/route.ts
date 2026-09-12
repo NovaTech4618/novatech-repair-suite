@@ -4,10 +4,7 @@ import { normalizeWhatsAppPhone } from "@/lib/whatsapp";
 
 type EventType = "sale" | "repair";
 
-type Body = {
-  type: EventType;
-  id: string;
-};
+type Body = { type: EventType; id: string };
 
 type SaleNotificationRow = {
   id: string;
@@ -15,7 +12,6 @@ type SaleNotificationRow = {
   total: number | null;
   payment_method: string | null;
   staff_name: string | null;
-  sale_date: string | null;
   customers:
     | { full_name: string | null }
     | Array<{ full_name: string | null }>
@@ -50,8 +46,17 @@ type RepairNotificationRow = {
     | null;
 };
 
-function jsonError(message: string, status = 400) {
-  return NextResponse.json({ ok: false, error: message }, { status });
+function jsonError(message: string, status = 400, details?: unknown) {
+  return NextResponse.json(
+    { ok: false, error: message, ...(details ? { details } : {}) },
+    { status },
+  );
+}
+
+function providerErrorMessage(result: unknown) {
+  if (!result || typeof result !== "object") return "WhatsApp provider rejected the message";
+  const error = (result as { error?: { message?: string; code?: number; error_data?: { details?: string } } }).error;
+  return error?.error_data?.details || error?.message || "WhatsApp provider rejected the message";
 }
 
 export async function POST(request: Request) {
@@ -70,9 +75,15 @@ export async function POST(request: Request) {
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const graphVersion = process.env.WHATSAPP_GRAPH_VERSION;
+    const templateName = process.env.WHATSAPP_OWNER_TEMPLATE_NAME;
+    const templateLanguage = process.env.WHATSAPP_OWNER_TEMPLATE_LANGUAGE || "en_US";
 
-    if (!supabaseUrl || !publishableKey) return jsonError("Supabase server configuration is missing", 500);
-    if (!accessToken || !phoneNumberId || !graphVersion) return jsonError("WhatsApp Cloud API is not configured", 503);
+    if (!supabaseUrl || !publishableKey) {
+      return jsonError("Supabase server configuration is missing", 500);
+    }
+    if (!accessToken || !phoneNumberId || !graphVersion) {
+      return jsonError("WhatsApp Cloud API is not configured", 503);
+    }
 
     const supabase = createClient(supabaseUrl, publishableKey, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -93,8 +104,6 @@ export async function POST(request: Request) {
 
     if (companyError || !company) return jsonError("Company not found", 404);
 
-    // The recipient is stored as a company-owner setting. Staff never choose
-    // the recipient and never receive these notifications themselves.
     const ownerPhone = normalizeWhatsAppPhone(
       company.owner_whatsapp_phone || company.showcase_phone || "",
     );
@@ -105,7 +114,7 @@ export async function POST(request: Request) {
     if (body.type === "sale") {
       const { data: sale, error } = await supabase
         .from("sales")
-        .select("id, company_id, total, payment_method, staff_name, sale_date, customers(full_name)")
+        .select("id, company_id, total, payment_method, staff_name, customers(full_name)")
         .eq("id", body.id)
         .eq("company_id", companyId)
         .single();
@@ -134,9 +143,7 @@ export async function POST(request: Request) {
       if (error || !repair) return jsonError("Repair not found", 404);
 
       const repairRow = repair as unknown as RepairNotificationRow;
-      const device = Array.isArray(repairRow.devices)
-        ? repairRow.devices[0]
-        : repairRow.devices;
+      const device = Array.isArray(repairRow.devices) ? repairRow.devices[0] : repairRow.devices;
       const customer = Array.isArray(device?.customers)
         ? device.customers[0]?.full_name
         : device?.customers?.full_name;
@@ -155,25 +162,64 @@ export async function POST(request: Request) {
       ].join("\n");
     }
 
+    // Owner alerts are proactive business-initiated messages. A normal text
+    // message can be rejected when the owner's 24-hour WhatsApp service window
+    // is closed, so production should use a Meta-approved utility template.
+    const payload = templateName
+      ? {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: ownerPhone,
+          type: "template",
+          template: {
+            name: templateName,
+            language: { code: templateLanguage },
+            components: [
+              {
+                type: "body",
+                parameters: [{ type: "text", text: message }],
+              },
+            ],
+          },
+        }
+      : {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: ownerPhone,
+          type: "text",
+          text: { preview_url: false, body: message },
+        };
+
     const response = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: ownerPhone,
-        type: "text",
-        text: { preview_url: false, body: message },
-      }),
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      console.error("WhatsApp owner notification failed", result);
-      return NextResponse.json({ ok: false, error: "WhatsApp provider rejected the message" }, { status: 502 });
+      const details = providerErrorMessage(result);
+      console.error("WhatsApp owner notification failed", {
+        status: response.status,
+        provider: result,
+        template: Boolean(templateName),
+      });
+      return jsonError(details, 502, { provider_status: response.status });
     }
 
-    return NextResponse.json({ ok: true, messageId: result?.messages?.[0]?.id ?? null });
+    const messageId = result?.messages?.[0]?.id ?? null;
+    if (!messageId) {
+      return jsonError("WhatsApp accepted the request but returned no message ID", 502);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      messageId,
+      mode: templateName ? "template" : "text",
+    });
   } catch (error) {
     console.error("WhatsApp owner notification error", error);
     return jsonError("Unable to send WhatsApp notification", 500);
