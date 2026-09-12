@@ -8,45 +8,32 @@ import Header from "./Header";
 import FloatingAssistant from "@/components/assistant/FloatingAssistant";
 import { getCurrentSession, supabase } from "@/lib/supabase";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-
     const checkAuth = async () => {
       const session = await getCurrentSession();
       if (!mounted) return;
-
       if (!session?.user) {
         router.replace("/login");
         return;
       }
-
       setCheckingAuth(false);
     };
 
     void checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-
       if (event === "SIGNED_OUT" || !session?.user) {
         router.replace("/login");
         return;
       }
-
       setCheckingAuth(false);
     });
-
     return () => {
       mounted = false;
       subscription.unsubscribe();
@@ -55,10 +42,10 @@ export default function AppLayout({
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-[var(--background)]">
+      <div className="min-h-screen bg-[var(--background)]" aria-busy="true" aria-label="Loading workspace">
         <div className="flex min-h-screen items-center justify-center px-6">
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-medium text-slate-600 shadow-sm">
-            <span className="size-2 animate-pulse rounded-full bg-teal-600" />
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 text-sm font-medium text-slate-600 shadow-sm">
+            <span className="size-2 animate-pulse rounded-full bg-[var(--novatech-primary)]" aria-hidden="true" />
             Checking your workspace…
           </div>
         </div>
@@ -71,8 +58,8 @@ export default function AppLayout({
       <AppSidebar />
       <SidebarInset className="min-h-screen bg-[var(--background)]">
         <Header />
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="flex-1 overflow-y-auto" tabIndex={-1}>
+          <div className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
             {children}
           </div>
         </main>
