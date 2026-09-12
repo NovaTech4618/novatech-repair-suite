@@ -32,10 +32,17 @@ export async function notifyOwnerOnWhatsApp(type: "sale" | "repair", id: string)
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      return { ok: false, error: result?.error || "WhatsApp notification failed" };
+      return {
+        ok: false,
+        error: result?.error || "WhatsApp notification failed",
+      };
     }
 
-    return { ok: true, messageId: result?.messageId ?? null };
+    return {
+      ok: true,
+      messageId: result?.messageId ?? null,
+      mode: result?.mode ?? null,
+    };
   } catch (error) {
     console.error("Owner WhatsApp notification error", error);
     return { ok: false, error: "WhatsApp notification failed" };
