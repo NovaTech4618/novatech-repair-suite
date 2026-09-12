@@ -13,6 +13,7 @@ export const companyService = {
       .select(
         `
           company_id,
+          full_name,
           companies (
             id,
             name

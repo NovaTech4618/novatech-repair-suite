@@ -13,6 +13,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { staffService } from "@/services/staffService";
+import { companyService } from "@/services/companyService";
 import { supabase } from "@/lib/supabase";
 import type { StaffRole } from "@/types/staff";
 
@@ -47,10 +48,17 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [myRole, setMyRole] = useState<StaffRole | null>(null);
+  const [profile, setProfile] = useState<{ fullName: string; companyName: string } | null>(null);
 
   useEffect(() => {
     let active = true;
     void staffService.getMyRole().then(({ data }) => { if (active && data) setMyRole(data); });
+    void companyService.getCompany().then(({ data }) => {
+      if (!active || !data) return;
+      const record = data as unknown as { full_name?: string; companies?: { name?: string } | { name?: string }[] };
+      const companyRecord = Array.isArray(record.companies) ? record.companies[0] : record.companies;
+      setProfile({ fullName: record.full_name ?? "Account", companyName: companyRecord?.name ?? "NOVATECH" });
+    });
     return () => { active = false; };
   }, []);
 
@@ -66,6 +74,7 @@ export default function AppSidebar() {
   }
 
   const canManageStaff = myRole !== null && manageRoles.includes(myRole);
+  const initial = profile?.fullName?.trim()?.[0]?.toUpperCase() ?? "N";
   const management: NavItem[] = [
     ...(canManageStaff ? [
       { title: "Staff & Branches", url: "/staff", icon: Building2 },
@@ -83,6 +92,14 @@ export default function AppSidebar() {
       {renderGroup(operations)}{renderGroup(workshop)}{renderGroup(money)}{renderGroup(communication)}
       {renderGroup({ label: "Management", items: management })}
     </SidebarContent>
-    <SidebarFooter className="border-t border-white/[0.06] bg-[#111111] p-2"><SidebarMenu><SidebarMenuItem><SidebarMenuButton isActive={pathname === "/help"} tooltip="Help & Support" render={<Link href="/help" />} className={menuButtonClass()}><HelpCircle className="size-[17px]" /><span>Help & Support</span></SidebarMenuButton></SidebarMenuItem><SidebarMenuItem><SidebarMenuButton tooltip="Log out" onClick={handleLogout} className={menuButtonClass()}><LogOut className="size-[17px]" /><span>Log out</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarFooter>
+    <SidebarFooter className="border-t border-white/[0.06] bg-[#111111] p-2">
+      <div className="mb-2 flex items-center gap-3 rounded-xl bg-white/[0.04] px-3 py-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#21F1A8] text-sm font-black text-[#07130f]">{initial}</div>
+        <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+          <p className="truncate text-sm font-semibold text-white">{profile?.fullName ?? "Loading…"}</p>
+          <p className="truncate text-xs text-slate-500">{profile?.companyName ?? ""}</p>
+        </div>
+      </div>
+      <SidebarMenu><SidebarMenuItem><SidebarMenuButton isActive={pathname === "/help"} tooltip="Help & Support" render={<Link href="/help" />} className={menuButtonClass()}><HelpCircle className="size-[17px]" /><span>Help & Support</span></SidebarMenuButton></SidebarMenuItem><SidebarMenuItem><SidebarMenuButton tooltip="Log out" onClick={handleLogout} className={menuButtonClass()}><LogOut className="size-[17px]" /><span>Log out</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarFooter>
   </Sidebar>;
 }
