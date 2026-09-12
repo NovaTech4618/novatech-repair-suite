@@ -46,8 +46,7 @@ export default function HomePage() {
       </nav>
 
       <section className="relative overflow-hidden border-b border-slate-200">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(20,184,166,0.18),transparent_34%),radial-gradient(circle_at_10%_35%,rgba(15,23,42,0.05),transparent_32%)]" />
-        <div className="absolute -right-32 top-20 h-72 w-72 rounded-full bg-teal-300/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(20,184,166,0.14),transparent_45%)]" />
         <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
           <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
             <div className="max-w-2xl nova-fade-up">
@@ -76,13 +75,18 @@ export default function HomePage() {
           <h2 className="mt-4 font-heading text-4xl font-bold tracking-tight sm:text-5xl">A repair shop should not depend on memory.</h2>
           <p className="mt-5 text-lg leading-8 text-slate-600">A customer asks about a device. Someone checks WhatsApp. A technician remembers a part. A payment is written somewhere. Later, nobody is completely sure what happened. NOVATECH turns those separate threads into one operational record.</p>
         </div>
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mt-14 divide-y divide-slate-200 border-y border-slate-200">
           {outcomes.map(([title, description], index) => (
-            <article key={title} className={`nova-lift nova-gradient-border rounded-3xl p-7 nova-fade-up nova-delay-${index + 1}`}>
+            <div
+              key={title}
+              className={`nova-fade-up nova-delay-${index + 1} grid gap-3 py-8 sm:grid-cols-[auto_1fr] sm:items-baseline sm:gap-10`}
+            >
               <span className="font-data text-sm font-bold text-teal-700">0{index + 1}</span>
-              <h3 className="mt-6 font-heading text-2xl font-bold">{title}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
-            </article>
+              <div className="sm:max-w-2xl">
+                <h3 className="font-heading text-2xl font-bold">{title}</h3>
+                <p className="mt-2 text-base leading-7 text-slate-600">{description}</p>
+              </div>
+            </div>
           ))}
         </div>
       </section>
@@ -107,8 +111,8 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="nova-lift relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 text-white sm:p-10">
-            <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-teal-400/15 blur-2xl" />
+          <div className="nova-lift relative overflow-hidden rounded-2xl bg-slate-950 p-8 text-white sm:p-10">
+          <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-teal-400/10 blur-2xl" />
             <div className="relative">
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-teal-300">Stay connected</p>
               <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight sm:text-4xl">WhatsApp when the customer needs an update.</h2>
@@ -116,7 +120,7 @@ export default function HomePage() {
               <Link href="/whatsapp" className="mt-7 inline-flex rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10">Open WhatsApp Center</Link>
             </div>
           </div>
-          <div className="nova-lift nova-gradient-border rounded-[2rem] p-8 sm:p-10">
+          <div className="nova-lift nova-gradient-border rounded-2xl p-8 sm:p-10">
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-teal-700">See the business</p>
             <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight sm:text-4xl">Reports for the bigger picture. Assistant for the questions.</h2>
             <p className="mt-4 max-w-xl text-slate-600">Keep reporting consolidated instead of splitting it into daily copies, while the assistant helps management understand the records already in NOVATECH.</p>

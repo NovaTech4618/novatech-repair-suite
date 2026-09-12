@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 
+// NOTE: this is an animated illustration, not a real product screenshot.
+// "No real product demo" is one of the most common tells that a site was
+// vibe-coded rather than built around an actual working product - and
+// NOVATECH has a real, working app behind this landing page. Replacing
+// this component with an actual screen recording or screenshot of the
+// live dashboard would be a stronger, more honest fix than anything that
+// can be done to this mockup - I can't capture that myself (no browser
+// access to the deployed app), so wiring in a real recording/screenshot
+// once one is provided is the next step here.
 const stages = [
   { label: "Device arrives", detail: "Customer + device captured" },
   { label: "Engineer", detail: "Job assigned" },
@@ -27,8 +36,8 @@ export default function RepairStoryVideo() {
       aria-label="NOVATECH repair workflow preview"
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_18%,rgba(45,212,191,0.24),transparent_30%),radial-gradient(circle_at_15%_80%,rgba(20,184,166,0.12),transparent_32%),linear-gradient(135deg,#0f172a,#111827)]" />
-      <div className="absolute -right-20 -top-20 size-64 rounded-full bg-teal-400/10 blur-3xl motion-safe:animate-pulse" />
-      <div className="absolute -bottom-24 -left-20 size-64 rounded-full bg-teal-500/10 blur-3xl motion-safe:animate-pulse" />
+      <div className="absolute -right-20 -top-20 size-64 rounded-full bg-teal-400/6 blur-3xl" />
+      <div className="absolute -bottom-24 -left-20 size-64 rounded-full bg-teal-500/6 blur-3xl" />
 
       <div className="relative flex h-full flex-col p-5 sm:p-8">
         <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 sm:text-xs">
