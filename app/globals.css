@@ -4,27 +4,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* NOVATECH brand palette — a vivid "cool tech" green, in the spirit of
-   Smart Repair Desk's crisp black-on-white-with-green-accent look
-   (their marketing pages go full black, but the actual app screens are
-   white/light with a bright green accent and near-black text - that's
-   the part worth matching here). Replaces the earlier teal and
-   gold/bronze experiments. */
+/* NOVATECH shared design system.
+   Calm business software: one green accent, neutral workspace, restrained
+   borders/shadows, and consistent control geometry. */
 :root {
   --novatech-primary: #12b76a;
   --novatech-primary-light: #34d399;
-  --novatech-primary-dark: #0b815a;
+  --novatech-primary-dark: #087443;
   --novatech-ink: #0a0a0a;
   --novatech-slate: #475569;
-  --novatech-background: #fafafa;
+  --novatech-background: #f7f8f7;
   --novatech-border: #e5e7eb;
   --novatech-success: #16a34a;
   --novatech-warning: #d97706;
   --novatech-danger: #dc2626;
-  --novatech-radius-sm: 10px;
-  --novatech-radius-md: 14px;
-  --novatech-radius-lg: 18px;
-  --novatech-shadow-card: 0 8px 24px rgba(10, 10, 10, 0.06);
+  --novatech-radius-sm: 8px;
+  --novatech-radius-md: 10px;
+  --novatech-radius-lg: 12px;
+  --novatech-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
   --background: var(--novatech-background);
   --foreground: var(--novatech-ink);
   --card: #ffffff;
@@ -33,37 +30,35 @@
   --popover-foreground: var(--novatech-ink);
   --primary: var(--novatech-primary);
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f4;
+  --secondary: #f1f5f3;
   --secondary-foreground: #0a0a0a;
   --muted: #f4f4f5;
   --muted-foreground: #64748b;
-  --accent: #e6f9f0;
+  --accent: #eaf8f1;
   --accent-foreground: var(--novatech-primary-dark);
   --destructive: var(--novatech-danger);
   --border: var(--novatech-border);
   --input: #d4d4d8;
-  --ring: var(--novatech-primary-light);
-  --radius: 0.875rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #334155;
+  --ring: var(--novatech-primary);
+  --radius: 0.625rem;
+  --sidebar: #111111;
+  --sidebar-foreground: #cbd5e1;
   --sidebar-primary: var(--novatech-primary);
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6f9f0;
-  --sidebar-accent-foreground: var(--novatech-primary-dark);
-  --sidebar-border: var(--novatech-border);
-  --sidebar-ring: var(--novatech-primary-light);
+  --sidebar-primary-foreground: #07130f;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #262626;
+  --sidebar-ring: var(--novatech-primary);
 }
 
 @theme inline {
-  /* Same override strategy as before: repoint Tailwind's built-in
-     teal-600..950 (already used across Header, AppSidebar, buttons,
-     badges) to the new green scale rather than renaming classes
-     across every component file. */
+  /* Existing teal utility classes intentionally resolve to NOVATECH green so
+     older screens stay visually consistent without a risky page-by-page rewrite. */
   --color-teal-600: #12b76a;
-  --color-teal-700: #0b815a;
-  --color-teal-800: #096b4a;
-  --color-teal-900: #07543b;
-  --color-teal-950: #043526;
+  --color-teal-700: #087443;
+  --color-teal-800: #06633a;
+  --color-teal-900: #054d2e;
+  --color-teal-950: #033b23;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
@@ -85,47 +80,47 @@
   --color-card: var(--card);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
-  --radius-sm: calc(var(--radius) * 0.7);
-  --radius-md: calc(var(--radius) * 0.9);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.35);
-  --radius-2xl: calc(var(--radius) * 1.65);
+  --radius-sm: calc(var(--radius) * 0.8);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.15);
+  --radius-xl: calc(var(--radius) * 1.3);
+  --radius-2xl: calc(var(--radius) * 1.5);
 }
 
 .dark {
-  --background: #0b1120;
+  --background: #0f1110;
   --foreground: #f8fafc;
-  --card: #111827;
+  --card: #171918;
   --card-foreground: #f8fafc;
-  --popover: #111827;
+  --popover: #171918;
   --popover-foreground: #f8fafc;
-  --primary: #2dd4bf;
-  --primary-foreground: #042f2e;
-  --secondary: #1e293b;
+  --primary: #34d399;
+  --primary-foreground: #052e1b;
+  --secondary: #202421;
   --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
+  --muted: #202421;
   --muted-foreground: #94a3b8;
-  --accent: #133b3a;
-  --accent-foreground: #99f6e4;
+  --accent: #123b28;
+  --accent-foreground: #a7f3d0;
   --destructive: #f87171;
-  --border: #263244;
-  --input: #334155;
-  --ring: #2dd4bf;
-  --sidebar: #0f172a;
+  --border: #2b302d;
+  --input: #3a403c;
+  --ring: #34d399;
+  --sidebar: #0d0f0e;
   --sidebar-foreground: #cbd5e1;
-  --sidebar-primary: #2dd4bf;
-  --sidebar-primary-foreground: #042f2e;
-  --sidebar-accent: #133b3a;
-  --sidebar-accent-foreground: #99f6e4;
-  --sidebar-border: #263244;
-  --sidebar-ring: #2dd4bf;
+  --sidebar-primary: #34d399;
+  --sidebar-primary-foreground: #052e1b;
+  --sidebar-accent: #171a18;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #292d2a;
+  --sidebar-ring: #34d399;
 }
 
 @layer base {
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground; font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
   html { @apply font-sans; }
-  ::selection { background: #ccfbf1; color: #134e4a; }
+  ::selection { background: #d1fae5; color: #064e3b; }
   button:disabled { cursor: not-allowed; }
 }
 
@@ -138,34 +133,28 @@
   overflow: hidden;
 }
 
-/* NOVATECH design primitives: inspired by modern gradient, motion, shadow,
-   neumorphic and geometric-wave references without copying any source. */
+/* Legacy helpers are intentionally restrained rather than deleted so pages
+   using them do not break. They now reinforce the shared visual system. */
 .nova-gradient-text {
-  background: linear-gradient(110deg, #0f766e 0%, #14b8a6 48%, #0f172a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--novatech-primary-dark);
 }
 
 .nova-gradient-border {
-  position: relative;
-  isolation: isolate;
-  border: 1px solid transparent;
-  background: linear-gradient(var(--card), var(--card)) padding-box,
-    linear-gradient(135deg, rgba(20,184,166,.5), rgba(15,23,42,.08), rgba(20,184,166,.18)) border-box;
+  border: 1px solid var(--novatech-border);
+  background: var(--card);
 }
 
-.nova-soft-shadow { box-shadow: 10px 10px 24px rgba(15,23,42,.07), -8px -8px 22px rgba(255,255,255,.9); }
-.nova-lift { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
-.nova-lift:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,.10); }
-.nova-fade-up { animation: nova-fade-up 600ms cubic-bezier(.22,1,.36,1) both; }
-.nova-delay-1 { animation-delay: 80ms; }
-.nova-delay-2 { animation-delay: 160ms; }
-.nova-delay-3 { animation-delay: 240ms; }
-.nova-wave { clip-path: ellipse(90% 72% at 50% 28%); }
+.nova-soft-shadow { box-shadow: var(--novatech-shadow-card); }
+.nova-lift { transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease; }
+.nova-lift:hover { transform: none; box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06); }
+.nova-fade-up { animation: nova-fade-up 350ms ease-out both; }
+.nova-delay-1 { animation-delay: 60ms; }
+.nova-delay-2 { animation-delay: 120ms; }
+.nova-delay-3 { animation-delay: 180ms; }
+.nova-wave { clip-path: none; }
 
 @keyframes nova-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -173,17 +162,17 @@
   width: 100%;
   min-width: 0;
   margin-top: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--novatech-radius-md);
   border: 1px solid #d6dde3;
   background: #fff;
-  padding: 0.8rem 0.95rem;
+  padding: 0.72rem 0.9rem;
   color: #0f172a;
-  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.02);
+  box-shadow: none;
   transition: border-color 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out;
 }
 .control::placeholder { color: #94a3b8; }
 .control:hover { border-color: #c4ced6; }
-.control:focus { border-color: #2dd4bf; background: #fff; box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12); outline: none; }
+.control:focus { border-color: var(--novatech-primary); background: #fff; box-shadow: 0 0 0 3px rgba(18, 183, 106, 0.12); outline: none; }
 
 .icon + .control { padding-left: 3rem !important; }
 .icon { pointer-events: none; position: absolute; left: 0.9rem; top: calc(50% + 0.25rem); width: 1rem; height: 1rem; transform: translateY(-50%); color: #94a3b8; z-index: 1; }
@@ -192,7 +181,7 @@ button[aria-label="Hide password"] { top: calc(50% + 0.25rem) !important; }
 
 input, textarea, select { color-scheme: light; min-width: 0; }
 button, a, input, textarea, select { transition-property: color, background-color, border-color, box-shadow, opacity, transform; transition-duration: 150ms; transition-timing-function: ease-out; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--novatech-primary-light); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--novatech-primary); outline-offset: 2px; }
 button:disabled { opacity: 0.55; }
 
 @media (max-width: 640px) {
