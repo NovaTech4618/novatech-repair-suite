@@ -76,16 +76,16 @@ revoke all on public.repair_invoice_view from public, anon;
 revoke all on public.sale_receipt_view from public, anon;
 grant select on public.repair_balance_view, public.repair_invoice_view, public.sale_receipt_view to authenticated;
 
--- Regression guard: these views must remain RLS-aware.
+-- Regression guard: these views must retain the security_invoker option.
 do $$
+declare
+  v_options text[];
 begin
-  if not exists (
-    select 1
-    from pg_views
-    where schemaname='public'
-      and viewname='repair_balance_view'
-      and definition ilike '%security_invoker%'
-  ) then
+  select c.reloptions into v_options
+  from pg_class c
+  join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public' and c.relname='repair_balance_view' and c.relkind='v';
+  if v_options is null or not ('security_invoker=true' = any(v_options)) then
     raise exception 'repair_balance_view security_invoker hardening missing';
   end if;
 end $$;
