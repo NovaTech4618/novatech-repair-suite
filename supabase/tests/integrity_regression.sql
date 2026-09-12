@@ -43,16 +43,15 @@ BEGIN
   IF has_function_privilege('authenticated','public.write_audit_log(text,text,uuid,jsonb,jsonb,jsonb)','EXECUTE') THEN RAISE EXCEPTION 'write_audit_log must not be directly executable by authenticated users'; END IF;
 END $$;
 
+-- Authoritative workflow tables must not expose an authenticated INSERT/UPDATE/DELETE policy.
 DO $$
+DECLARE v_table text; v_policy text;
 BEGIN
-  IF has_table_privilege('authenticated','public.repair_parts_usage','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT repair_parts_usage'; END IF;
-  IF has_table_privilege('authenticated','public.repair_parts_usage','UPDATE') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can UPDATE repair_parts_usage'; END IF;
-  IF has_table_privilege('authenticated','public.repair_assignments','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT repair_assignments'; END IF;
-  IF has_table_privilege('authenticated','public.repair_assignments','UPDATE') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can UPDATE repair_assignments'; END IF;
-  IF has_table_privilege('authenticated','public.invoices','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT invoices'; END IF;
-  IF has_table_privilege('authenticated','public.invoices','UPDATE') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can UPDATE invoices'; END IF;
-  IF has_table_privilege('authenticated','public.invoice_items','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT invoice_items'; END IF;
-  IF has_table_privilege('authenticated','public.customer_debt_ledger','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT customer_debt_ledger'; END IF;
+  FOREACH v_table IN ARRAY ARRAY['repair_parts_usage','repair_assignments','invoices','invoice_items','customer_debt_ledger'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename=v_table AND roles @> ARRAY['authenticated']::name[] AND cmd IN ('INSERT','UPDATE','DELETE') AND coalesce(with_check,'') <> 'false' AND coalesce(qual,'') <> 'false') THEN
+      RAISE EXCEPTION 'Direct-write regression: % still has a permissive authenticated write policy',v_table;
+    END IF;
+  END LOOP;
 END $$;
 
 DO $$
