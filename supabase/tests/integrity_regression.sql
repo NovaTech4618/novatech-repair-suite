@@ -44,6 +44,27 @@ BEGIN
   IF has_function_privilege('authenticated','public.write_audit_log(text,text,uuid,jsonb,jsonb,jsonb)','EXECUTE') THEN RAISE EXCEPTION 'write_audit_log must not be directly executable by authenticated users'; END IF;
 END $$;
 
+-- Workflow writes must not be bypassable through direct Data API inserts/updates.
+DO $$
+BEGIN
+  IF has_table_privilege('authenticated','public.repair_parts_usage','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT repair_parts_usage'; END IF;
+  IF has_table_privilege('authenticated','public.repair_parts_usage','UPDATE') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can UPDATE repair_parts_usage'; END IF;
+  IF has_table_privilege('authenticated','public.repair_assignments','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT repair_assignments'; END IF;
+  IF has_table_privilege('authenticated','public.repair_assignments','UPDATE') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can UPDATE repair_assignments'; END IF;
+  IF has_table_privilege('authenticated','public.invoices','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT invoices'; END IF;
+  IF has_table_privilege('authenticated','public.invoices','UPDATE') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can UPDATE invoices'; END IF;
+  IF has_table_privilege('authenticated','public.invoice_items','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT invoice_items'; END IF;
+  IF has_table_privilege('authenticated','public.customer_debt_ledger','INSERT') THEN RAISE EXCEPTION 'Direct-write regression: authenticated can INSERT customer_debt_ledger'; END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT has_function_privilege('authenticated','public.record_repair_part_usage(uuid,uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'record_repair_part_usage is not executable by authenticated users'; END IF;
+  IF has_function_privilege('anon','public.record_repair_part_usage(uuid,uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'record_repair_part_usage must not be executable by anon'; END IF;
+  IF NOT has_function_privilege('authenticated','public.return_repair_part_usage(uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'return_repair_part_usage is not executable by authenticated users'; END IF;
+  IF has_function_privilege('anon','public.return_repair_part_usage(uuid,integer,text)','EXECUTE') THEN RAISE EXCEPTION 'return_repair_part_usage must not be executable by anon'; END IF;
+END $$;
+
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='financial_transactions_amount_positive') THEN RAISE EXCEPTION 'Missing financial_transactions_amount_positive constraint'; END IF;
