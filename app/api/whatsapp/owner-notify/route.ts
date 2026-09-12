@@ -9,6 +9,47 @@ type Body = {
   id: string;
 };
 
+type SaleNotificationRow = {
+  id: string;
+  company_id: string;
+  total: number | null;
+  payment_method: string | null;
+  staff_name: string | null;
+  sale_date: string | null;
+  customers:
+    | { full_name: string | null }
+    | Array<{ full_name: string | null }>
+    | null;
+};
+
+type RepairNotificationRow = {
+  id: string;
+  company_id: string;
+  status: string | null;
+  issue: string | null;
+  technician: string | null;
+  estimated_cost: number | null;
+  final_cost: number | null;
+  devices:
+    | {
+        brand: string | null;
+        model: string | null;
+        customers:
+          | { full_name: string | null }
+          | Array<{ full_name: string | null }>
+          | null;
+      }
+    | Array<{
+        brand: string | null;
+        model: string | null;
+        customers:
+          | { full_name: string | null }
+          | Array<{ full_name: string | null }>
+          | null;
+      }>
+    | null;
+};
+
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
@@ -70,15 +111,18 @@ export async function POST(request: Request) {
         .single();
       if (error || !sale) return jsonError("Sale not found", 404);
 
-      const customer = Array.isArray(sale.customers) ? sale.customers[0]?.full_name : sale.customers?.full_name;
+      const saleRow = sale as unknown as SaleNotificationRow;
+      const customer = Array.isArray(saleRow.customers)
+        ? saleRow.customers[0]?.full_name
+        : saleRow.customers?.full_name;
       message = [
         "NOVATECH — New Sale",
         `Business: ${company.name}`,
-        `Amount: ₦${Number(sale.total ?? 0).toLocaleString("en-NG")}`,
+        `Amount: ₦${Number(saleRow.total ?? 0).toLocaleString("en-NG")}`,
         `Customer: ${customer || "Walk-in customer"}`,
-        `Payment: ${sale.payment_method || "Not specified"}`,
-        `Staff: ${sale.staff_name || "Not specified"}`,
-        `Sale ID: ${sale.id}`,
+        `Payment: ${saleRow.payment_method || "Not specified"}`,
+        `Staff: ${saleRow.staff_name || "Not specified"}`,
+        `Sale ID: ${saleRow.id}`,
       ].join("\n");
     } else {
       const { data: repair, error } = await supabase
@@ -89,20 +133,25 @@ export async function POST(request: Request) {
         .single();
       if (error || !repair) return jsonError("Repair not found", 404);
 
-      const device = Array.isArray(repair.devices) ? repair.devices[0] : repair.devices;
-      const customer = Array.isArray(device?.customers) ? device.customers[0]?.full_name : device?.customers?.full_name;
+      const repairRow = repair as unknown as RepairNotificationRow;
+      const device = Array.isArray(repairRow.devices)
+        ? repairRow.devices[0]
+        : repairRow.devices;
+      const customer = Array.isArray(device?.customers)
+        ? device.customers[0]?.full_name
+        : device?.customers?.full_name;
       const deviceName = [device?.brand, device?.model].filter(Boolean).join(" ") || "Device";
       message = [
         "NOVATECH — Repair Update",
         `Business: ${company.name}`,
         `Device: ${deviceName}`,
         `Customer: ${customer || "Walk-in customer"}`,
-        `Problem: ${repair.issue || "Not specified"}`,
-        `Status: ${repair.status || "Not specified"}`,
-        `Technician: ${repair.technician || "Not assigned"}`,
-        `Estimated: ₦${Number(repair.estimated_cost ?? 0).toLocaleString("en-NG")}`,
-        `Final: ₦${Number(repair.final_cost ?? 0).toLocaleString("en-NG")}`,
-        `Repair ID: ${repair.id}`,
+        `Problem: ${repairRow.issue || "Not specified"}`,
+        `Status: ${repairRow.status || "Not specified"}`,
+        `Technician: ${repairRow.technician || "Not assigned"}`,
+        `Estimated: ₦${Number(repairRow.estimated_cost ?? 0).toLocaleString("en-NG")}`,
+        `Final: ₦${Number(repairRow.final_cost ?? 0).toLocaleString("en-NG")}`,
+        `Repair ID: ${repairRow.id}`,
       ].join("\n");
     }
 
