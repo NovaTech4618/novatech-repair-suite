@@ -1,9 +1,70 @@
 "use client";
-import { useEffect,useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search as SearchIcon,Users,Smartphone,Wrench,Package,FileText,Truck } from "lucide-react";
+import { Search as SearchIcon, Users, Smartphone, Wrench, Package, FileText, Truck, X } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { supabase } from "@/lib/supabase";
-type Result={entity_type:string;id:string;title:string;subtitle:string;href:string};
-const meta:Record<string,{label:string;Icon:typeof Users}>={customer:{label:"Customer",Icon:Users},device:{label:"Device",Icon:Smartphone},repair:{label:"Repair",Icon:Wrench},inventory:{label:"Inventory",Icon:Package},invoice:{label:"Invoice",Icon:FileText},purchase:{label:"Purchase",Icon:Truck}};
-export default function SearchPage(){const[q,setQ]=useState("");const[results,setResults]=useState<Result[]>([]);const[loading,setLoading]=useState(false);const[error,setError]=useState("");useEffect(()=>{const t=setTimeout(async()=>{const term=q.trim();if(!term){setResults([]);setLoading(false);return}setLoading(true);setError("");const{data,error:e}=await supabase.rpc("global_search",{p_query:term,p_limit:100});if(e)setError(e.message);setResults((data??[])as Result[]);setLoading(false)},250);return()=>clearTimeout(t)},[q]);const grouped=results.reduce<Record<string,Result[]>>((acc,r)=>{(acc[r.entity_type]??=[]).push(r);return acc},{});const groups=Object.entries(grouped);return <AppLayout><div className="mx-auto max-w-5xl space-y-6"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Workspace</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Global Search</h1><p className="mt-1 text-sm text-slate-500">Find customers, devices, repairs, stock, invoices and supplier purchases from one place.</p></div><div className="relative"><SearchIcon className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400"/><input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, phone, IMEI, SKU, repair issue, invoice or supplier…" className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-sm shadow-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"/></div>{loading&&<p className="text-sm text-slate-400">Searching…</p>}{error&&<p className="text-sm text-red-600">{error}</p>}{q.trim()&&!loading&&!error&&<p className="text-sm text-slate-500">{results.length} result{results.length===1?"":"s"} for <span className="font-semibold text-slate-800">“{q}”</span></p>}{!q.trim()?<div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center"><SearchIcon className="mx-auto size-8 text-slate-300"/><p className="mt-3 font-semibold text-slate-800">Start typing to search NOVATECH</p><p className="mt-1 text-sm text-slate-500">Search across your operational data without opening each module.</p></div>:!loading&&!results.length&&!error?<div className="rounded-2xl border border-slate-200 bg-white p-12 text-center"><p className="font-semibold text-slate-800">No results found</p><p className="mt-1 text-sm text-slate-500">Try a customer name, phone number, IMEI, SKU, invoice number or supplier.</p></div>:<div className="space-y-5">{groups.map(([type,items])=>{const m=meta[type]??{label:type,Icon:SearchIcon};const Icon=m.Icon;return <section key={type} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-400">{m.label} · {items.length}</div><div className="divide-y divide-slate-100">{items.map(r=><Link key={r.entity_type+r.id} href={r.href} className="flex items-center gap-4 p-4 transition hover:bg-slate-50"><div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Icon className="size-5"/></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-900">{r.title}</p><p className="truncate text-xs text-slate-500">{r.subtitle}</p></div><span className="text-xs font-semibold text-teal-600">Open →</span></Link>)}</div></section>})}</div>}</div></AppLayout>}
+
+type Result = { entity_type: string; id: string; title: string; subtitle: string; href: string };
+const meta: Record<string, { label: string; Icon: typeof Users }> = {
+  customer: { label: "Customers", Icon: Users },
+  device: { label: "Devices", Icon: Smartphone },
+  repair: { label: "Repairs", Icon: Wrench },
+  inventory: { label: "Inventory", Icon: Package },
+  invoice: { label: "Invoices", Icon: FileText },
+  purchase: { label: "Purchases", Icon: Truck },
+};
+
+export default function SearchPage() {
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const term = q.trim();
+    if (!term) { setResults([]); setLoading(false); setError(""); return; }
+    const timer = setTimeout(async () => {
+      setLoading(true); setError("");
+      const { data, error: searchError } = await supabase.rpc("global_search", { p_query: term, p_limit: 100 });
+      if (searchError) setError(searchError.message || "Search is unavailable right now.");
+      setResults((data ?? []) as Result[]);
+      setLoading(false);
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [q]);
+
+  const groups = useMemo(() => {
+    const grouped = results.reduce<Record<string, Result[]>>((acc, result) => {
+      (acc[result.entity_type] ??= []).push(result);
+      return acc;
+    }, {});
+    return Object.entries(grouped);
+  }, [results]);
+
+  return <AppLayout><div className="mx-auto w-full max-w-5xl space-y-6">
+    <header>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#087443]">Find anything</p>
+      <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Global Search</h1>
+      <p className="mt-1 text-sm leading-6 text-slate-500">Find customers, devices, repairs, stock, invoices and purchases without opening each module.</p>
+    </header>
+
+    <div className="sticky top-[72px] z-20 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+      <div className="relative flex items-center">
+        <SearchIcon className="pointer-events-none absolute left-3.5 size-5 text-slate-400" aria-hidden="true" />
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setQ(""); }} placeholder="Name, phone, IMEI, SKU, repair, invoice or supplier…" aria-label="Search NOVATECH" className="h-12 w-full rounded-lg border-0 bg-slate-50 pl-11 pr-11 text-sm outline-none ring-1 ring-inset ring-slate-200 focus:bg-white focus:ring-2 focus:ring-[#12b76a]" />
+        {q && <button type="button" onClick={() => setQ("")} className="absolute right-2.5 flex size-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Clear search"><X className="size-4" /></button>}
+      </div>
+      <div className="hidden px-2 pt-2 text-[11px] text-slate-400 sm:flex sm:justify-between"><span>Searches your business records</span><span>Esc to clear</span></div>
+    </div>
+
+    {loading && <div className="flex items-center gap-2 text-sm text-slate-500"><span className="size-2 animate-pulse rounded-full bg-[#12b76a]" />Searching…</div>}
+    {error && <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">Search failed: {error}</div>}
+    {q.trim() && !loading && !error && <p className="text-sm text-slate-500">{results.length} result{results.length === 1 ? "" : "s"} for <span className="font-semibold text-slate-800">“{q.trim()}”</span></p>}
+
+    {!q.trim() ? <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center sm:p-14"><SearchIcon className="mx-auto size-8 text-slate-300"/><p className="mt-3 font-semibold text-slate-800">Search your whole workspace</p><p className="mt-1 text-sm text-slate-500">Try a customer name, phone number, IMEI, SKU, repair issue or invoice.</p></div>
+      : !loading && !results.length && !error ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center"><p className="font-semibold text-slate-800">No results found</p><p className="mt-1 text-sm text-slate-500">Try fewer words or search by phone, IMEI, SKU or ID.</p></div>
+      : <div className="space-y-4">{groups.map(([type, items]) => { const m = meta[type] ?? { label: type, Icon: SearchIcon }; const Icon = m.Icon; return <section key={type} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-3"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">{m.label}</span><span className="text-xs font-semibold text-slate-400">{items.length}</span></div><div className="divide-y divide-slate-100">{items.map((r) => <Link key={`${r.entity_type}-${r.id}`} href={r.href} className="flex min-h-16 items-center gap-3 p-4 transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#12b76a]"><div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><Icon className="size-4" aria-hidden="true" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-900">{r.title}</p><p className="truncate text-xs text-slate-500">{r.subtitle}</p></div><span className="hidden shrink-0 text-xs font-semibold text-[#087443] sm:block">Open →</span></Link>)}</div></section>; })}</div>}
+  </div></AppLayout>;
+}
